@@ -9,10 +9,21 @@ import { APP } from '../config/app.config.js';
 import { signOut } from '../core/auth.js';
 import { onInstallState, promptInstall } from '../core/pwa.js';
 
+// Corner-brackets + barcode glyph for the raised mobile-nav scanner button — drawn as
+// inline SVG rather than trusting an emoji glyph to render the same way across devices.
+const SCAN_ICON = `<svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+  <path d="M4 8V6a2 2 0 0 1 2-2h2M4 16v2a2 2 0 0 0 2 2h2M20 8V6a2 2 0 0 0-2-2h-2M20 16v2a2 2 0 0 1-2 2h-2"/>
+  <path d="M8 9v6M11 9v6M14 9v6M17 9v6" stroke-width="1.6"/>
+</svg>`;
+
 export function mountShell({ root = $('#app'), roleLabel, subtitle, user, profile, modules }) {
   const name = profile.name || profile.email;
   const sections = [...new Set(modules.map((m) => m.section))];
   const navBtn = (m, cls) => `<button class="${cls}" data-tab="${m.id}" data-title="${esc(m.title)}">`;
+  // One module may opt into being the raised center button on the mobile bottom nav
+  // (see modules/checkin/checkin.view.js) instead of sitting in the scrollable row.
+  const fabModule = modules.find((m) => m.fab);
+  const rowModules = modules.filter((m) => !m.fab);
 
   root.innerHTML = `
   <div class="app">
@@ -44,9 +55,12 @@ export function mountShell({ root = $('#app'), roleLabel, subtitle, user, profil
       <footer class="footer-bar"><span>${esc(APP.name)} · ${esc(APP.tagline)}</span><span>Synced live via <span class="hl">Firebase</span></span></footer>
     </div>
   </div>
-  <nav class="mobile-nav"><div class="mob-nav-grid">
-    ${modules.map((m) => `${navBtn(m, 'mob-nav-btn')}<span class="mob-icon">${m.icon}</span><span class="mob-label">${esc(m.label)}</span></button>`).join('')}
-  </div></nav>`;
+  <nav class="mobile-nav">
+    <div class="mob-nav-grid">
+      ${rowModules.map((m) => `${navBtn(m, 'mob-nav-btn')}<span class="mob-icon">${m.icon}</span><span class="mob-label">${esc(m.label)}</span></button>`).join('')}
+    </div>
+    ${fabModule ? `${navBtn(fabModule, 'mob-nav-fab')}${SCAN_ICON}</button>` : ''}
+  </nav>`;
 
   document.title = `${APP.name} — ${roleLabel}`;
   $('#logout').addEventListener('click', signOut);

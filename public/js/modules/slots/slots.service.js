@@ -183,3 +183,24 @@ export function cancelSlotBooking(slotId, uid) {
     tx.delete(bookingRef);
   });
 }
+
+/**
+ * Admin-only: removes one attendee from a slot's roster and frees their seat.
+ * Members can't cancel their own booking (deliberate — see slots.view.js), so this
+ * is the only way to undo a booking, e.g. a no-show or a booking made by mistake.
+ * isAdmin() bypasses the slots/slot_bookings rules entirely, so this is a plain
+ * transaction rather than needing the member-side existsAfter() pairing dance.
+ */
+export function adminRemoveSlotBooking(slotId, uid) {
+  return runTransaction(db, async (tx) => {
+    const slotRef = doc(db, 'slots', slotId);
+    const bookingRef = doc(db, 'slot_bookings', slotBookingId(slotId, uid));
+
+    const [slotDoc, existingBooking] = await Promise.all([tx.get(slotRef), tx.get(bookingRef)]);
+    if (!existingBooking.exists()) throw new Error('That member is not booked into this slot.');
+    if (slotDoc.exists()) {
+      tx.update(slotRef, { bookedCount: Math.max(0, slotDoc.data().bookedCount - 1) });
+    }
+    tx.delete(bookingRef);
+  });
+}

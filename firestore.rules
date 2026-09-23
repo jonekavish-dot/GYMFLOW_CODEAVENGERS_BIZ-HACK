@@ -9,7 +9,8 @@ rules_version = '2';
 //   plans/{planId}          { name, durationDays, price, description, active }
 //   classes/{classId}       { title, trainer, startAt, durationMin, capacity, bookedCount, tags }
 //   bookings/{classId_uid}  { classId, uid, classStartAt, createdAt }
-//   checkins/{id}           { uid, at, checkedOutAt, method }
+//   checkins/{id}           { uid, at, checkedOutAt, method, codeUsed }
+//   config/checkinSession   { code, expiresAt, validityMinutes, createdBy, createdAt } — admin-only
 //   trainers/{id}           { name, role, exp, phone, skills, title, isOwner, active }
 //   attendance/{date_uid}   { date, uid, name, kind: 'member'|'trainer', status, exercises, notes }
 //   payments/{id}           { uid, memberName, amount, method, months, kind: 'join'|'renewal', at }
@@ -28,6 +29,7 @@ service cloud.firestore {
     function slotPath(id) { return /databases/$(database)/documents/slots/$(id); }
     function slotBookingPath(id) { return /databases/$(database)/documents/slot_bookings/$(id); }
     function bootstrapPath() { return /databases/$(database)/documents/config/bootstrap; }
+    function checkinSessionPath() { return /databases/$(database)/documents/config/checkinSession; }
 
     function isAdmin() {
       return signedIn()
@@ -42,6 +44,15 @@ service cloud.firestore {
 
     function onlyChanged(keys) {
       return request.resource.data.diff(resource.data).affectedKeys().hasOnly(keys);
+    }
+
+    // The one code an admin is currently broadcasting (as a QR and as digits) is
+    // the only thing that lets a member self-check-in, and it expires on its own —
+    // no separate "is this code active" flag to forget to flip.
+    function validCheckinCode(code) {
+      return exists(checkinSessionPath())
+        && get(checkinSessionPath()).data.code == code
+        && get(checkinSessionPath()).data.expiresAt > request.time;
     }
 
     // ── First-admin bootstrap ──
@@ -172,8 +183,12 @@ service cloud.firestore {
     match /checkins/{id} {
       allow get: if isAdmin() || (signedIn() && resource.data.uid == request.auth.uid);
       allow list: if isAdmin() || (signedIn() && resource.data.uid == request.auth.uid);
+      // Admin can check anyone in by hand (front-desk override, no code needed).
+      // A member can only self-check-in with the code currently on admin's screen.
       allow create: if isAdmin()
-        || (isSelf(request.resource.data.uid) && hasActiveMembership(request.auth.uid));
+        || (isSelf(request.resource.data.uid)
+            && hasActiveMembership(request.auth.uid)
+            && validCheckinCode(request.resource.data.codeUsed));
       allow update: if isAdmin()
         || (isSelf(resource.data.uid) && onlyChanged(['checkedOutAt']));
       allow delete: if isAdmin();

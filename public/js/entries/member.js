@@ -7,6 +7,7 @@ import { applyTheme, getTheme } from '../modules/settings/settings.service.js';
 import membership from '../modules/membership/membership.view.js';
 import memberSlots from '../modules/slots/member-slots.view.js';
 import bookings from '../modules/bookings/bookings.view.js';
+import checkin from '../modules/checkin/checkin.view.js';
 import activity from '../modules/activity/activity.view.js';
 
 applyTheme(getTheme());
@@ -17,6 +18,6 @@ mountShell({
   subtitle: 'Member Portal',
   user,
   profile,
-  modules: [membership, memberSlots, bookings, activity],
+  modules: [membership, memberSlots, bookings, checkin, activity],
 });
 startIdleLogout();

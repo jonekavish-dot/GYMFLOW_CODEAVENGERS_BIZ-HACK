@@ -7,6 +7,7 @@ import { applyTheme, getTheme } from '../modules/settings/settings.service.js';
 import dashboard from '../modules/dashboard/dashboard.view.js';
 import members from '../modules/members/members.view.js';
 import attendance from '../modules/attendance/attendance.view.js';
+import checkinDesk from '../modules/checkin/checkin-desk.view.js';
 import classes from '../modules/classes/classes.view.js';
 import slots from '../modules/slots/slots.view.js';
 import plans from '../modules/plans/plans.view.js';
@@ -23,6 +24,6 @@ mountShell({
   subtitle: 'Admin Console',
   user,
   profile,
-  modules: [dashboard, members, slots, attendance, classes, plans, trainers, payments, analytics, settings],
+  modules: [dashboard, members, slots, attendance, checkinDesk, classes, plans, trainers, payments, analytics, settings],
 });
 startIdleLogout();

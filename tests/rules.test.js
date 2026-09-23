@@ -276,3 +276,63 @@ describe('config', () => {
     await assertFails(setDoc(doc(as('admin'), 'config/bootstrap'), { adminUid: 'mallory' }));
   });
 });
+
+describe('front-desk check-in', () => {
+  const session = (code, minutesLeft = 30) => ({
+    code, validityMinutes: minutesLeft, createdBy: 'admin',
+    expiresAt: Timestamp.fromMillis(Date.now() + minutesLeft * 60000),
+  });
+
+  beforeEach(() => seed({
+    'users/admin': { role: 'admin' },
+    'users/m1': { role: 'member' }, 'members/m1': member(30),
+    'users/old': { role: 'member' }, 'members/old': member(-1),
+  }));
+
+  it('only admin can start a check-in session', async () => {
+    await assertSucceeds(setDoc(doc(as('admin'), 'config/checkinSession'), session('123456')));
+    await assertFails(setDoc(doc(as('m1'), 'config/checkinSession'), session('999999')));
+  });
+
+  it('member self-checks-in with the current code', async () => {
+    await seed({ 'config/checkinSession': session('123456') });
+    await assertSucceeds(setDoc(doc(as('m1'), 'checkins/c1'),
+      { uid: 'm1', method: 'otp', codeUsed: '123456', checkedOutAt: null }));
+  });
+
+  it('wrong code is rejected', async () => {
+    await seed({ 'config/checkinSession': session('123456') });
+    await assertFails(setDoc(doc(as('m1'), 'checkins/c1'),
+      { uid: 'm1', method: 'otp', codeUsed: '000000', checkedOutAt: null }));
+  });
+
+  it('expired code is rejected even if it matches', async () => {
+    await seed({ 'config/checkinSession': session('123456', -1) });
+    await assertFails(setDoc(doc(as('m1'), 'checkins/c1'),
+      { uid: 'm1', method: 'qr', codeUsed: '123456', checkedOutAt: null }));
+  });
+
+  it('expired membership cannot self-check-in even with a valid code', async () => {
+    await seed({ 'config/checkinSession': session('123456') });
+    await assertFails(setDoc(doc(as('old'), 'checkins/c1'),
+      { uid: 'old', method: 'qr', codeUsed: '123456', checkedOutAt: null }));
+  });
+
+  it('member cannot check in someone else', async () => {
+    await seed({ 'config/checkinSession': session('123456') });
+    await assertFails(setDoc(doc(as('m1'), 'checkins/c1'),
+      { uid: 'old', method: 'qr', codeUsed: '123456', checkedOutAt: null }));
+  });
+
+  it('admin can check anyone in by hand, no code required', async () => {
+    await assertSucceeds(setDoc(doc(as('admin'), 'checkins/c1'),
+      { uid: 'm1', method: 'manual', codeUsed: null, checkedOutAt: null }));
+  });
+
+  it('member can check themselves out but not anyone else', async () => {
+    await seed({ 'checkins/c1': { uid: 'm1', method: 'qr', codeUsed: '123456', checkedOutAt: null } });
+    await assertSucceeds(updateDoc(doc(as('m1'), 'checkins/c1'), { checkedOutAt: serverTimestamp() }));
+    await seed({ 'checkins/c2': { uid: 'old', method: 'qr', codeUsed: '1', checkedOutAt: null } });
+    await assertFails(updateDoc(doc(as('m1'), 'checkins/c2'), { checkedOutAt: serverTimestamp() }));
+  });
+});

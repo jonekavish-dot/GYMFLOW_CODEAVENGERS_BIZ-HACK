@@ -1,7 +1,7 @@
 // Admin · Gym Slots — schedule workout time slots with max customer overload,
 // view live attendee counts, inspect attendee rosters, and toggle status.
 import {
-  createSlot, deleteSlot, updateSlotStatus, watchUpcomingSlots, watchSlotBookings,
+  createSlot, deleteSlot, updateSlotStatus, watchUpcomingSlots, watchSlotBookings, adminRemoveSlotBooking,
 } from './slots.service.js';
 import { watchTrainers } from '../trainers/trainers.service.js';
 import { $, esc } from '../../shared/dom.js';
@@ -205,8 +205,8 @@ export default {
             </span>
           </div>
           <div class="table-wrap"><table class="data-table">
-            <thead><tr><th>Member</th><th>Member ID</th><th>Booked At</th></tr></thead>
-            <tbody id="roster-rows"><tr class="empty"><td colspan="3">Loading…</td></tr></tbody>
+            <thead><tr><th>Member</th><th>Member ID</th><th>Booked At</th><th></th></tr></thead>
+            <tbody id="roster-rows"><tr class="empty"><td colspan="4">Loading…</td></tr></tbody>
           </table></div>`,
         onClose: () => { unsub?.(); },
       });
@@ -218,8 +218,23 @@ export default {
               <td data-label="Member"><strong>${esc(b.memberName || '–')}</strong></td>
               <td data-label="Member ID"><span class="chip">${esc(b.customId || '–')}</span></td>
               <td data-label="Booked At">${b.createdAt ? fmtDateTime(b.createdAt) : '–'}</td>
+              <td class="row-actions"><button class="btn btn-danger btn-sm" data-remove="${b.uid}">Remove</button></td>
             </tr>`).join('')
-          : '<tr class="empty"><td colspan="3">No members have booked this slot yet.</td></tr>';
+          : '<tr class="empty"><td colspan="4">No members have booked this slot yet.</td></tr>';
+      });
+
+      $('#roster-rows', modal).addEventListener('click', async (ev) => {
+        const btn = ev.target.closest('[data-remove]');
+        if (!btn) return;
+        if (!confirm('Remove this member from the slot and free their seat?')) return;
+        btn.disabled = true;
+        try {
+          await adminRemoveSlotBooking(slot.id, btn.dataset.remove);
+          toast('Removed from slot — seat freed');
+        } catch (e) {
+          toast(authErrorMessage(e), 'err');
+          btn.disabled = false;
+        }
       });
     }
   },
