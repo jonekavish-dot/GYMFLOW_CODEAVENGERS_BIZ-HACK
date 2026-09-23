@@ -117,9 +117,32 @@ export default {
     $('#available-slot-rows', el).addEventListener('click', async (ev) => {
       const btn = ev.target.closest('[data-book-slot]');
       if (!btn) return;
+      const slotId = btn.dataset.bookSlot;
+
+      // Time Security Check: Ensure member does not have an overlapping slot booking
+      const targetSlot = allSlots.find((s) => s.id === slotId);
+      if (targetSlot) {
+        const targetStart = targetSlot.startAt?.toMillis ? targetSlot.startAt.toMillis() : new Date(targetSlot.startAt).getTime();
+        const targetEnd = targetSlot.endAt?.toMillis
+          ? targetSlot.endAt.toMillis()
+          : targetStart + (targetSlot.durationMin || 60) * 60000;
+
+        const overlap = allSlots.find((s) => {
+          if (!bookedSlotIds.has(s.id)) return false;
+          const sStart = s.startAt?.toMillis ? s.startAt.toMillis() : new Date(s.startAt).getTime();
+          const sEnd = s.endAt?.toMillis ? s.endAt.toMillis() : sStart + (s.durationMin || 60) * 60000;
+          return targetStart < sEnd && targetEnd > sStart;
+        });
+
+        if (overlap) {
+          toast(`Time Conflict: You already have a slot booked ("${overlap.title}") at this time.`, 'err');
+          return;
+        }
+      }
+
       btn.disabled = true;
       try {
-        await bookSlot(btn.dataset.bookSlot, {
+        await bookSlot(slotId, {
           uid: user.uid,
           name: memberData?.name || user.email,
           customId: memberData?.customId || '',

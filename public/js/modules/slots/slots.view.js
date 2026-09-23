@@ -39,6 +39,7 @@ export default {
             <option value="closed">Closed / Reserved</option>
           </select></label>
         </div>
+        <div id="trainer-conflict-alert" class="banner banner-expired" style="margin-bottom:0.75rem" hidden></div>
         <label>Notes / Restrictions <input name="notes" placeholder="e.g. Bring personal gym towel & water"></label>
         <button type="submit" class="btn btn-primary btn-block">⚡ Create Workout Slot</button>
       </form>
@@ -107,7 +108,44 @@ export default {
         ${trainers.filter((t) => t.active !== false).map((t) => `<option value="${esc(t.name)}" ${t.name === current ? 'selected' : ''}>${esc(t.name)} (${esc(t.role || 'Trainer')})</option>`).join('')}`;
     });
 
-    watchUpcomingSlots((list) => { slots = list; render(); });
+    const form = $('#slot-form', el);
+    const alertEl = $('#trainer-conflict-alert', el);
+
+    const checkLiveConflict = () => {
+      const trainer = form.trainer?.value?.trim();
+      const startVal = form.startAt?.value;
+      const duration = Number(form.durationMin?.value) || 60;
+      if (!trainer || !startVal) {
+        alertEl.hidden = true;
+        return;
+      }
+      const startMs = new Date(startVal).getTime();
+      const endMs = startMs + duration * 60000;
+
+      const conflict = slots.find((s) => {
+        if ((s.trainer || '').trim() !== trainer) return false;
+        const sStart = s.startAt?.toMillis ? s.startAt.toMillis() : new Date(s.startAt).getTime();
+        const sEnd = s.endAt?.toMillis ? s.endAt.toMillis() : sStart + (s.durationMin || 60) * 60000;
+        return startMs < sEnd && endMs > sStart;
+      });
+
+      if (conflict) {
+        const cStart = fmtDateTime(conflict.startAt);
+        const cEndMs = conflict.endAt?.toMillis
+          ? conflict.endAt.toMillis()
+          : (conflict.startAt?.toMillis ? conflict.startAt.toMillis() : new Date(conflict.startAt).getTime()) + (conflict.durationMin || 60) * 60000;
+        const cEnd = fmtDateTime(new Date(cEndMs));
+        alertEl.hidden = false;
+        alertEl.textContent = `⚠️ Trainer Conflict: ${trainer} is already booked for "${conflict.title}" (${cStart} – ${cEnd}). A new slot can only be scheduled after that slot completes.`;
+      } else {
+        alertEl.hidden = true;
+      }
+    };
+
+    form.addEventListener('input', checkLiveConflict);
+    form.addEventListener('change', checkLiveConflict);
+
+    watchUpcomingSlots((list) => { slots = list; render(); checkLiveConflict(); });
 
     $('#slot-rows', el).addEventListener('click', async (ev) => {
       const toggleBtn = ev.target.closest('[data-toggle]');
