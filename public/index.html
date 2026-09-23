@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>A.S. Fitness · Sign in</title>
+  <link rel="stylesheet" href="css/app.css">
+</head>
+<body class="auth-page">
+  <main class="auth-card">
+    <h1 class="brand">A.S. <span>Fitness</span></h1>
+    <p class="muted">Membership &amp; class booking</p>
+
+    <div id="conn" class="conn conn-checking">Checking Firebase connection…</div>
+    <p id="login-err" class="err" role="alert"></p>
+
+    <form id="login-form" autocomplete="on" onsubmit="return false">
+      <label>Email <input type="email" name="email" required autocomplete="username"></label>
+      <label>Password <input type="password" name="password" required autocomplete="current-password"></label>
+      <button type="submit" class="btn btn-primary">Sign in</button>
+      <button type="button" id="forgot" class="btn btn-link">Forgot password?</button>
+    </form>
+
+    <form id="setup-form" hidden onsubmit="return false">
+      <h2>First-time setup</h2>
+      <p class="muted">No admin exists yet. Create the owner account — this form disappears afterwards.</p>
+      <label>Name <input name="fullName" required></label>
+      <label>Email <input type="email" name="email" required autocomplete="username"></label>
+      <label>Password <input type="password" name="password" required minlength="6" autocomplete="new-password"></label>
+      <button type="submit" class="btn btn-primary">Create admin account</button>
+    </form>
+
+    <p class="muted small">Members: your login is created by the gym at registration.</p>
+  </main>
+  <script type="module" src="js/pages/login.js"></script>
+</body>
+</html>

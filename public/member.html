@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>A.S. Fitness · Member</title>
+  <link rel="stylesheet" href="css/app.css">
+</head>
+<body class="app" hidden>
+  <header class="topbar">
+    <h1 class="brand">A.S. <span>Fitness</span></h1>
+    <div class="who"><span id="who"></span><button id="logout" class="btn btn-ghost">Sign out</button></div>
+  </header>
+
+  <nav class="tabs">
+    <button data-tab="home" class="active">Membership</button>
+    <button data-tab="classes">Book classes</button>
+  </nav>
+
+  <main>
+    <section data-panel="home">
+      <div id="expiry-banner" class="banner" hidden></div>
+      <div class="grid-2">
+        <div class="card">
+          <h2>My membership</h2>
+          <p><span id="status-pill" class="pill">–</span></p>
+          <dl class="facts">
+            <dt>Plan</dt><dd id="m-plan">–</dd>
+            <dt>Started</dt><dd id="m-start">–</dd>
+            <dt>Valid until</dt><dd id="m-expiry">–</dd>
+          </dl>
+        </div>
+        <form id="goals-form" class="card" onsubmit="return false">
+          <h2>My goals</h2>
+          <p class="muted small">Used for AI class recommendations.</p>
+          <textarea name="goals" rows="3"></textarea>
+          <button type="submit" class="btn btn-primary">Save goals</button>
+        </form>
+      </div>
+    </section>
+
+    <section data-panel="classes" hidden>
+      <div class="card">
+        <h2>Upcoming classes</h2>
+        <table class="table"><thead><tr><th>Class</th><th>When</th><th>Seats left</th><th></th></tr></thead><tbody id="class-rows"></tbody></table>
+      </div>
+    </section>
+  </main>
+  <script type="module" src="js/pages/member.js"></script>
+</body>
+</html>

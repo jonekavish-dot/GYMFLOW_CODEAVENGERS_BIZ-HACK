@@ -1,0 +1,128 @@
+rules_version = '2';
+
+// PS76 — Gym Membership & Class Booking
+//
+// Collections
+//   config/bootstrap        { adminUid, createdAt }            first-admin marker (public get)
+//   users/{uid}             { role: 'admin'|'member', email, name, createdAt }
+//   members/{uid}           { name, email, phone, planId, planName, startDate, expiryDate, goals, createdAt }
+//   plans/{planId}          { name, durationDays, price, description, active }
+//   classes/{classId}       { title, trainer, startAt, durationMin, capacity, bookedCount, tags }
+//   bookings/{classId_uid}  { classId, uid, classStartAt, createdAt }
+//   checkins/{id}           { uid, at, checkedOutAt, method }
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function signedIn() { return request.auth != null; }
+    function isSelf(uid) { return signedIn() && request.auth.uid == uid; }
+    function userPath(uid) { return /databases/$(database)/documents/users/$(uid); }
+    function memberPath(uid) { return /databases/$(database)/documents/members/$(uid); }
+    function classPath(id) { return /databases/$(database)/documents/classes/$(id); }
+    function bookingPath(id) { return /databases/$(database)/documents/bookings/$(id); }
+    function bootstrapPath() { return /databases/$(database)/documents/config/bootstrap; }
+
+    function isAdmin() {
+      return signedIn()
+        && exists(userPath(request.auth.uid))
+        && get(userPath(request.auth.uid)).data.role == 'admin';
+    }
+
+    function hasActiveMembership(uid) {
+      return exists(memberPath(uid))
+        && get(memberPath(uid)).data.expiryDate > request.time;
+    }
+
+    function onlyChanged(keys) {
+      return request.resource.data.diff(resource.data).affectedKeys().hasOnly(keys);
+    }
+
+    // ── First-admin bootstrap ──
+    // Anyone may check whether setup has happened (used as the connection probe).
+    // It can be created exactly once, in the same batch as the creator's admin users/ doc.
+    match /config/bootstrap {
+      allow get: if true;
+      allow create: if signedIn()
+        && request.resource.data.keys().hasOnly(['adminUid', 'createdAt'])
+        && request.resource.data.adminUid == request.auth.uid
+        && getAfter(userPath(request.auth.uid)).data.role == 'admin';
+      allow update, delete: if false;
+    }
+
+    match /config/{doc} {
+      allow read: if signedIn();
+      allow write: if isAdmin() && doc != 'bootstrap';
+    }
+
+    // ── Roles ── members can never write their own role.
+    match /users/{uid} {
+      allow get: if isSelf(uid) || isAdmin();
+      allow list: if isAdmin();
+      allow create: if isAdmin()
+        || (isSelf(uid)
+            && request.resource.data.role == 'admin'
+            && !exists(bootstrapPath())
+            && getAfter(bootstrapPath()).data.adminUid == uid);
+      allow update, delete: if isAdmin();
+    }
+
+    match /members/{uid} {
+      allow get: if isSelf(uid) || isAdmin();
+      allow list: if isAdmin();
+      allow create, delete: if isAdmin();
+      allow update: if isAdmin() || (isSelf(uid) && onlyChanged(['goals', 'phone']));
+    }
+
+    match /plans/{planId} {
+      allow read: if signedIn();
+      allow write: if isAdmin();
+    }
+
+    // Members may only move bookedCount by ±1, and only together with the
+    // matching create/delete of their own booking doc (see bookings below).
+    match /classes/{classId} {
+      allow read: if signedIn();
+      allow create, delete: if isAdmin();
+      allow update: if isAdmin() || (signedIn()
+        && onlyChanged(['bookedCount'])
+        && request.resource.data.bookedCount >= 0
+        && request.resource.data.bookedCount <= resource.data.capacity
+        && (
+          (request.resource.data.bookedCount == resource.data.bookedCount + 1
+            && !exists(bookingPath(classId + '_' + request.auth.uid))
+            && existsAfter(bookingPath(classId + '_' + request.auth.uid)))
+          ||
+          (request.resource.data.bookedCount == resource.data.bookedCount - 1
+            && exists(bookingPath(classId + '_' + request.auth.uid))
+            && !existsAfter(bookingPath(classId + '_' + request.auth.uid)))
+        ));
+    }
+
+    // Booking id is `${classId}_${uid}` so a member can hold one seat per class.
+    match /bookings/{bookingId} {
+      allow get: if isAdmin() || (signedIn() && bookingId.matches('.*_' + request.auth.uid));
+      allow list: if isAdmin() || (signedIn() && resource.data.uid == request.auth.uid);
+      allow create: if signedIn()
+        && request.resource.data.uid == request.auth.uid
+        && bookingId == request.resource.data.classId + '_' + request.auth.uid
+        && hasActiveMembership(request.auth.uid)
+        && getAfter(classPath(request.resource.data.classId)).data.bookedCount
+             == get(classPath(request.resource.data.classId)).data.bookedCount + 1;
+      allow delete: if isAdmin() || (signedIn()
+        && resource.data.uid == request.auth.uid
+        && getAfter(classPath(resource.data.classId)).data.bookedCount
+             == get(classPath(resource.data.classId)).data.bookedCount - 1);
+      allow update: if false;
+    }
+
+    match /checkins/{id} {
+      allow get: if isAdmin() || (signedIn() && resource.data.uid == request.auth.uid);
+      allow list: if isAdmin() || (signedIn() && resource.data.uid == request.auth.uid);
+      allow create: if isAdmin()
+        || (isSelf(request.resource.data.uid) && hasActiveMembership(request.auth.uid));
+      allow update: if isAdmin()
+        || (isSelf(resource.data.uid) && onlyChanged(['checkedOutAt']));
+      allow delete: if isAdmin();
+    }
+  }
+}

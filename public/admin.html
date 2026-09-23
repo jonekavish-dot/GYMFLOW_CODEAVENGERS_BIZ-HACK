@@ -1,0 +1,94 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>A.S. Fitness · Admin</title>
+  <link rel="stylesheet" href="css/app.css">
+</head>
+<body class="app" hidden>
+  <header class="topbar">
+    <h1 class="brand">A.S. <span>Fitness</span> <small>Admin</small></h1>
+    <div class="who"><span id="who"></span><button id="logout" class="btn btn-ghost">Sign out</button></div>
+  </header>
+
+  <nav class="tabs">
+    <button data-tab="dashboard" class="active">Dashboard</button>
+    <button data-tab="members">Members</button>
+    <button data-tab="plans">Plans</button>
+    <button data-tab="classes">Classes</button>
+  </nav>
+
+  <main>
+    <section data-panel="dashboard">
+      <div class="kpis">
+        <div class="kpi"><span>Members</span><strong id="kpi-members">–</strong></div>
+        <div class="kpi"><span>Expiring ≤ 7d</span><strong id="kpi-expiring">–</strong></div>
+        <div class="kpi"><span>Expired</span><strong id="kpi-expired">–</strong></div>
+        <div class="kpi"><span>Inside now</span><strong id="kpi-occupancy">–</strong></div>
+      </div>
+      <div class="card">
+        <h2>Membership alerts</h2>
+        <ul id="alerts" class="list"><li class="muted">Loading…</li></ul>
+      </div>
+    </section>
+
+    <section data-panel="members" hidden>
+      <div class="grid-2">
+        <form id="member-form" class="card" onsubmit="return false">
+          <h2>Register member</h2>
+          <label>Full name <input name="fullName" required></label>
+          <label>Email <input type="email" name="email" required></label>
+          <label>Phone <input type="tel" name="phone"></label>
+          <label>Temporary password <input name="password" required minlength="6"></label>
+          <label>Plan <select name="planId" required></select></label>
+          <label>Start date <input type="date" name="startDate" required></label>
+          <label>Goals <textarea name="goals" rows="2" placeholder="e.g. lose 5 kg, build stamina"></textarea></label>
+          <button type="submit" class="btn btn-primary">Register</button>
+        </form>
+        <div class="card">
+          <h2>Members</h2>
+          <table class="table"><thead><tr><th>Name</th><th>Plan</th><th>Status</th></tr></thead><tbody id="member-rows"></tbody></table>
+        </div>
+      </div>
+    </section>
+
+    <section data-panel="plans" hidden>
+      <div class="grid-2">
+        <form id="plan-form" class="card" onsubmit="return false">
+          <h2>New membership plan</h2>
+          <label>Name <input name="planName" required placeholder="Monthly"></label>
+          <label>Duration (days) <input type="number" name="durationDays" min="1" required value="30"></label>
+          <label>Price (₹) <input type="number" name="price" min="0" required></label>
+          <label>Description <input name="description"></label>
+          <button type="submit" class="btn btn-primary">Create plan</button>
+        </form>
+        <div class="card">
+          <h2>Plans</h2>
+          <ul id="plan-list" class="list"></ul>
+        </div>
+      </div>
+    </section>
+
+    <section data-panel="classes" hidden>
+      <div class="grid-2">
+        <form id="class-form" class="card" onsubmit="return false">
+          <h2>Schedule class</h2>
+          <label>Title <input name="classTitle" required placeholder="HIIT Blast"></label>
+          <label>Trainer <input name="trainer" required></label>
+          <label>Starts <input type="datetime-local" name="startAt" required></label>
+          <label>Duration (min) <input type="number" name="durationMin" min="10" value="60" required></label>
+          <label>Capacity <input type="number" name="capacity" min="1" value="20" required></label>
+          <label>Tags <input name="tags" placeholder="cardio, strength, beginner"></label>
+          <button type="submit" class="btn btn-primary">Schedule</button>
+        </form>
+        <div class="card">
+          <h2>Upcoming classes</h2>
+          <table class="table"><thead><tr><th>Class</th><th>When</th><th>Booked</th><th></th></tr></thead><tbody id="class-rows"></tbody></table>
+        </div>
+      </div>
+    </section>
+  </main>
+  <script type="module" src="js/pages/admin.js"></script>
+</body>
+</html>
