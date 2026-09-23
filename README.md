@@ -49,6 +49,16 @@ ps76/
 
 Local dev without touching the cloud: set `USE_EMULATORS = true` in `firebase-config.js`, then run `firebase emulators:start` in `ps76/` and open http://127.0.0.1:5000.
 
+## Deploy from GitHub (no local CLI needed)
+
+`.github/workflows/deploy-ps76.yml` deploys hosting + rules + indexes to `ps76-gym` on every push to `main` (or this branch) that touches `ps76/`.
+One-time setup:
+1. Firebase Console → **Hosting → Get started** (just click through, to create the site).
+2. Firebase Console → ⚙ **Project settings → Service accounts → Generate new private key** → downloads a JSON file.
+3. GitHub repo → **Settings → Secrets and variables → Actions → New repository secret**
+   Name: `FIREBASE_SERVICE_ACCOUNT_PS76_GYM`, Value: paste the whole JSON file.
+4. GitHub → **Actions → Deploy PS76 to Firebase → Run workflow**. Live at **https://ps76-gym.web.app**.
+
 ## Tests
 
 ```bash
