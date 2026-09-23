@@ -1,10 +1,10 @@
 import {
   onAuthStateChanged, signInWithEmailAndPassword, createUserWithEmailAndPassword,
   signOut as fbSignOut, sendPasswordResetEmail, deleteUser,
-} from 'https://www.gstatic.com/firebasejs/12.19.0/firebase-auth.js';
+} from './sdk/auth.js';
 import {
   doc, getDoc, writeBatch, serverTimestamp,
-} from 'https://www.gstatic.com/firebasejs/12.19.0/firebase-firestore.js';
+} from './sdk/firestore.js';
 import { auth, db } from './firebase.js';
 
 export const ROLES = { ADMIN: 'admin', MEMBER: 'member' };

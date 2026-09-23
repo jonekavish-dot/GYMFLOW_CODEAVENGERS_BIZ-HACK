@@ -1,9 +1,9 @@
-import { createUserWithEmailAndPassword, signOut } from 'https://www.gstatic.com/firebasejs/12.19.0/firebase-auth.js';
+import { createUserWithEmailAndPassword, signOut } from '../../core/sdk/auth.js';
 import {
   collection, doc, getDoc, onSnapshot, orderBy, query, updateDoc, writeBatch, serverTimestamp, Timestamp,
-} from 'https://www.gstatic.com/firebasejs/12.19.0/firebase-firestore.js';
-import { db, withSecondaryAuth } from '../firebase.js';
-import { ROLES } from '../auth.js';
+} from '../../core/sdk/firestore.js';
+import { db, withSecondaryAuth } from '../../core/firebase.js';
+import { ROLES } from '../../core/auth.js';
 
 const DAY_MS = 24 * 60 * 60 * 1000;
 

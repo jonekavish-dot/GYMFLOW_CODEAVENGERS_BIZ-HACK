@@ -1,7 +1,7 @@
 import {
   addDoc, collection, deleteDoc, doc, onSnapshot, orderBy, query, serverTimestamp, Timestamp, where,
-} from 'https://www.gstatic.com/firebasejs/12.19.0/firebase-firestore.js';
-import { db } from '../firebase.js';
+} from '../../core/sdk/firestore.js';
+import { db } from '../../core/firebase.js';
 
 const classesCol = collection(db, 'classes');
 

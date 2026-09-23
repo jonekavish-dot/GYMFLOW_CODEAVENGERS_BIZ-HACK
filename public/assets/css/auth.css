@@ -1,0 +1,33 @@
+/* Login page: lock-screen card, setup box, connection badge. */
+/* ── LOCK SCREEN (login) ── */
+.lockscreen { min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 24px 12px; background: radial-gradient(ellipse at top, rgba(57, 229, 106, .06), transparent 60%), var(--bg); }
+.lock-box { background: linear-gradient(145deg, #1a1d1b, #141716); border: 1px solid rgba(57, 229, 106, .15); box-shadow: var(--shadow-lg), 0 0 60px rgba(0, 0, 0, .5); border-radius: var(--r-lg); padding: 40px 36px; width: 370px; max-width: 95vw; text-align: center; animation: slideIn .3s ease; }
+.lock-mark { display: block; margin: 0 auto 6px; filter: drop-shadow(0 0 16px rgba(57, 229, 106, .5)); }
+.lock-logo { font-family: var(--font-d); font-size: 32px; font-weight: 900; letter-spacing: .05em; margin-bottom: 4px; background: linear-gradient(135deg, #39e56a, #52f07f); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; filter: drop-shadow(0 0 20px rgba(57, 229, 106, .5)); }
+.lock-sub { font-size: 10px; letter-spacing: .18em; text-transform: uppercase; color: var(--text-muted); margin-bottom: 22px; }
+.lock-box form { text-align: left; }
+.lock-box label { display: block; font-size: 11px; font-weight: 600; letter-spacing: .1em; text-transform: uppercase; color: var(--text-muted); margin-bottom: 14px; }
+.lock-box input { display: block; width: 100%; margin-top: 6px; background: rgba(255, 255, 255, .04); border: 1px solid rgba(255, 255, 255, .1); border-radius: 10px; padding: 12px 14px; font: 15px var(--font-b); color: var(--text-primary); outline: none; letter-spacing: .04em; text-transform: none; transition: all var(--tr); }
+.lock-box input:focus { border-color: rgba(57, 229, 106, .5); box-shadow: 0 0 0 3px rgba(57, 229, 106, .1), 0 0 20px rgba(57, 229, 106, .1); }
+.lock-btn { width: 100%; background: linear-gradient(135deg, #39e56a, #2bc95a); color: #0d1a10; border: 0; border-radius: 10px; padding: 12px; font: 700 15px var(--font-b); letter-spacing: .03em; cursor: pointer; box-shadow: 0 4px 20px rgba(57, 229, 106, .35); transition: all var(--tr); }
+.lock-btn:hover { background: linear-gradient(135deg, #52f07f, #39e56a); transform: translateY(-1px); box-shadow: 0 6px 24px rgba(57, 229, 106, .45); }
+.lock-btn:disabled { opacity: .6; cursor: wait; transform: none; }
+.lock-link { display: block; margin: 12px auto 0; background: none; border: 0; color: var(--accent); font: 11px var(--font-b); text-decoration: underline; cursor: pointer; }
+.lock-err { color: var(--danger); font-size: 12px; margin: 4px 0 10px; min-height: 18px; text-align: center; }
+.lock-hint { margin-top: 18px; padding: 12px 14px; font-size: 11px; line-height: 1.6; text-align: left; color: var(--text-muted); background: rgba(57, 229, 106, .05); border: 1px solid rgba(57, 229, 106, .15); border-radius: 10px; }
+.lock-hint strong { color: var(--text-primary); }
+.lock-hint .hl { color: var(--accent); font-weight: 700; }
+.setup-box { margin-top: 20px; padding: 16px; border: 1px solid rgba(245, 166, 35, .3); background: rgba(245, 166, 35, .05); border-radius: 12px; }
+.setup-box h3 { font-family: var(--font-d); font-size: 16px; letter-spacing: .06em; text-transform: uppercase; color: var(--warn); margin-bottom: 4px; }
+.setup-box p { font-size: 11px; color: var(--text-muted); margin-bottom: 12px; }
+
+.conn { display: inline-flex; align-items: center; gap: 6px; font-size: 10px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; padding: 5px 11px; border-radius: 20px; margin-bottom: 14px; border: 1px solid var(--border); color: var(--text-muted); max-width: 100%; text-align: left; }
+.conn::before { content: ''; width: 6px; height: 6px; border-radius: 50%; background: currentColor; flex-shrink: 0; }
+.conn-ok { color: var(--accent); background: var(--accent-glow); border-color: var(--accent-dim); }
+.conn-ok::before { animation: pulse 1.6s ease infinite; box-shadow: 0 0 6px var(--accent); }
+.conn-err { color: var(--danger); background: rgba(229, 57, 53, .1); border-color: rgba(229, 57, 53, .3); text-transform: none; letter-spacing: 0; font-weight: 600; }
+
+@media (max-width: 600px) {
+  .lock-box { padding: 32px 22px; }
+  .lock-box input { font-size: 16px; } /* stop iOS zoom */
+}

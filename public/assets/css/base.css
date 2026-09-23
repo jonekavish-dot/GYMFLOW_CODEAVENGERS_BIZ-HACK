@@ -1,0 +1,22 @@
+/* Design tokens, reset and shared keyframes. Loaded by every page. */
+:root {
+  --bg: #0b0e0c; --bg-panel: #111513; --bg-card: #171a18; --bg-hover: #1d2120;
+  --border: #242826; --accent: #39e56a; --accent-dim: #1c7a38; --accent-glow: rgba(57, 229, 106, .15);
+  --warn: #f5a623; --danger: #e53935; --info: #4da6ff; --purple: #c084fc;
+  --text-primary: #ecf0ec; --text-muted: #6b7d6e; --text-label: #3d4e40;
+  --font-d: 'Barlow Condensed', 'Arial Narrow', sans-serif; --font-b: 'Barlow', system-ui, sans-serif;
+  --r: 11px; --r-lg: 16px; --tr: .22s ease;
+  --shadow-sm: 0 1px 3px rgba(0, 0, 0, .4); --shadow-md: 0 4px 16px rgba(0, 0, 0, .5); --shadow-lg: 0 8px 32px rgba(0, 0, 0, .6);
+  color-scheme: dark;
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+[hidden] { display: none !important; }
+html, body { min-height: 100%; }
+body { font-family: var(--font-b); background: var(--bg); color: var(--text-primary); overflow-x: hidden; -webkit-tap-highlight-color: transparent; }
+::-webkit-scrollbar { width: 5px; height: 5px; } ::-webkit-scrollbar-track { background: var(--bg); } ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+.muted { color: var(--text-muted); }
+.small { font-size: 11px; }
+@keyframes pulse { 0%, 100% { opacity: 1; transform: scale(1); } 50% { opacity: .4; transform: scale(.7); } }
+@keyframes slideIn { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: none; } }
+@keyframes pageIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }

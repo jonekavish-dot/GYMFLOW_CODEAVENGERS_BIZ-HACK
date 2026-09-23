@@ -1,12 +1,11 @@
-// Single place that initialises Firebase. Every other module imports from here,
-// so the SDK version is pinned in exactly one spot.
-import { initializeApp, deleteApp } from 'https://www.gstatic.com/firebasejs/12.19.0/firebase-app.js';
-import { getAuth, connectAuthEmulator } from 'https://www.gstatic.com/firebasejs/12.19.0/firebase-auth.js';
+// Single place that initialises Firebase; every module gets `app`, `auth` and `db` from here.
+import { initializeApp, deleteApp } from './sdk/app.js';
+import { getAuth, connectAuthEmulator } from './sdk/auth.js';
 import {
   initializeFirestore, persistentLocalCache, persistentMultipleTabManager,
   connectFirestoreEmulator, doc, getDocFromServer,
-} from 'https://www.gstatic.com/firebasejs/12.19.0/firebase-firestore.js';
-import { firebaseConfig, USE_EMULATORS } from './firebase-config.js';
+} from './sdk/firestore.js';
+import { firebaseConfig, USE_EMULATORS } from '../config/firebase.config.js';
 
 export const isConfigured = !Object.values(firebaseConfig).some((v) => String(v).includes('YOUR_'));
 
@@ -36,13 +35,13 @@ export async function withSecondaryAuth(fn) {
 
 /**
  * Real connectivity probe. Reads config/bootstrap, which the rules make publicly
- * readable, so it works before sign-in and tells apart the failure modes that the
- * old portal lumped together as "not connected".
+ * readable, so it works before sign-in and tells apart the different ways a
+ * connection can fail.
  * @returns {Promise<{ok: boolean, state: string, message: string, bootstrapped?: boolean}>}
  */
 export async function checkConnection() {
   if (!isConfigured) {
-    return { ok: false, state: 'unconfigured', message: 'Firebase config missing — edit public/js/firebase-config.js' };
+    return { ok: false, state: 'unconfigured', message: 'Firebase config missing — edit public/js/config/firebase.config.js' };
   }
   try {
     const snap = await getDocFromServer(doc(db, 'config', 'bootstrap'));

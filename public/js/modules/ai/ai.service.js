@@ -1,8 +1,8 @@
 // Gemini class recommendations via Firebase AI Logic — the Gemini key stays on
 // Google's side instead of shipping in client JS.
 // One-time: Console → Build → AI Logic → Get started → "Gemini Developer API".
-import { getAI, getGenerativeModel, GoogleAIBackend } from 'https://www.gstatic.com/firebasejs/12.19.0/firebase-ai.js';
-import { app } from '../firebase.js';
+import { getAI, getGenerativeModel, GoogleAIBackend } from '../../core/sdk/ai.js';
+import { app } from '../../core/firebase.js';
 
 let model;
 function getModel() {

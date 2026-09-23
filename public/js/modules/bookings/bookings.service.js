@@ -1,7 +1,7 @@
 import {
   collection, doc, onSnapshot, query, runTransaction, serverTimestamp, where,
-} from 'https://www.gstatic.com/firebasejs/12.19.0/firebase-firestore.js';
-import { db } from '../firebase.js';
+} from '../../core/sdk/firestore.js';
+import { db } from '../../core/firebase.js';
 
 const bookingId = (classId, uid) => `${classId}_${uid}`;
 

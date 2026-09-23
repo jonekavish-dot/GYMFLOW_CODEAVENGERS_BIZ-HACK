@@ -1,7 +1,7 @@
 import {
   addDoc, collection, doc, onSnapshot, orderBy, query, serverTimestamp, updateDoc,
-} from 'https://www.gstatic.com/firebasejs/12.19.0/firebase-firestore.js';
-import { db } from '../firebase.js';
+} from '../../core/sdk/firestore.js';
+import { db } from '../../core/firebase.js';
 
 const plansCol = collection(db, 'plans');
 

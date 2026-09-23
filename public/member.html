@@ -3,87 +3,16 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>💪 A.S. Fitness — Member</title>
-  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='20' fill='%230d0f0e'/><text y='72' x='50' text-anchor='middle' font-size='52' font-family='Arial Black,sans-serif' font-weight='900' fill='%2339e56a'>AS</text></svg>">
+  <title>Loading…</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='22' fill='%230d0f0e'/><g fill='%2339e56a'><rect x='14' y='34' width='12' height='32' rx='3'/><rect x='74' y='34' width='12' height='32' rx='3'/><rect x='28' y='40' width='8' height='20' rx='2'/><rect x='64' y='40' width='8' height='20' rx='2'/><rect x='36' y='46' width='28' height='8' rx='2'/></g></svg>">
   <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;600;700;900&family=Barlow:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="css/app.css">
+  <link rel="stylesheet" href="assets/css/base.css">
+  <link rel="stylesheet" href="assets/css/components.css">
+  <link rel="stylesheet" href="assets/css/layout.css">
 </head>
 <body hidden>
-<div class="app">
-  <aside class="sidebar">
-    <div class="sb-logo">
-      <div class="brand">A.S. FITNESS</div>
-      <div class="sub">Member Portal</div>
-    </div>
-    <nav class="sb-nav">
-      <div class="nav-sec">Main</div>
-      <button class="nav-item active" data-tab="home" data-title="My Membership"><span class="ni">🪪</span>Membership</button>
-      <button class="nav-item" data-tab="classes" data-title="Book Classes"><span class="ni">📅</span>Book Classes<span id="nav-booked" class="nav-badge" hidden></span></button>
-    </nav>
-    <div class="owner-card">
-      <div class="ow-av" id="ow-av">–</div>
-      <div class="ow-name" id="who">–</div>
-      <div class="ow-title">Member</div>
-      <div class="ow-badges"><span class="ow-badge" id="ow-plan">–</span></div>
-    </div>
-    <div class="sb-foot">PS76 · BIZ HACK '26</div>
-  </aside>
-
-  <div class="main">
-    <header class="topbar">
-      <div class="tb-left">
-        <h2 id="page-title">My Membership</h2>
-        <div class="dateline" id="dateline"></div>
-      </div>
-      <div class="tb-right">
-        <span class="live-badge"><span class="live-dot"></span>Live</span>
-        <span class="user-tag"><span class="av" id="tb-av">–</span><span class="who-txt"><span class="nm" id="tb-name">–</span><span class="rl">Member</span></span></span>
-        <button id="logout" class="btn btn-danger btn-sm">🔓 Logout</button>
-      </div>
-    </header>
-
-    <section class="page" data-panel="home">
-      <div id="expiry-banner" class="banner" hidden></div>
-      <div class="sec-title">Membership</div>
-      <div class="kpi-grid">
-        <div class="kpi-card" style="--card-accent:#39e56a"><div class="kpi-lbl">📆 Days Left</div><div class="kpi-val" id="kpi-days">–</div><div class="kpi-sub" id="kpi-days-sub">&nbsp;</div></div>
-        <div class="kpi-card" style="--card-accent:#4da6ff"><div class="kpi-lbl">🎟️ Classes Booked</div><div class="kpi-val" id="kpi-booked">–</div><div class="kpi-sub">Upcoming</div></div>
-      </div>
-      <div class="grid-2">
-        <div class="panel">
-          <div class="panel-hdr"><div class="panel-ttl">🪪 My Membership</div><span id="status-pill" class="status-badge">–</span></div>
-          <dl class="facts">
-            <dt>Plan</dt><dd id="m-plan">–</dd>
-            <dt>Started</dt><dd id="m-start">–</dd>
-            <dt>Valid until</dt><dd id="m-expiry">–</dd>
-          </dl>
-        </div>
-        <form id="goals-form" class="panel" onsubmit="return false">
-          <div class="panel-hdr"><div class="panel-ttl">🎯 My Goals</div><span class="panel-tag">AI</span></div>
-          <label>What do you want to achieve? <textarea name="goals" rows="3" placeholder="e.g. lose 5 kg, build stamina"></textarea></label>
-          <button type="submit" class="btn btn-primary btn-block">Save Goals</button>
-        </form>
-      </div>
-    </section>
-
-    <section class="page" data-panel="classes" hidden>
-      <div class="sec-title">Upcoming Classes</div>
-      <div class="panel">
-        <div class="panel-hdr"><div class="panel-ttl">📅 Book a Slot</div><span class="panel-tag">Live</span></div>
-        <div class="table-wrap"><table class="data-table"><thead><tr><th>Class</th><th>When</th><th>Seats Left</th><th></th></tr></thead><tbody id="class-rows"></tbody></table></div>
-      </div>
-    </section>
-
-    <footer class="footer-bar"><span>A.S. Fitness · Member Portal</span><span>Synced live via <span class="hl">Firebase</span></span></footer>
-  </div>
-</div>
-
-<nav class="mobile-nav">
-  <div class="mob-nav-grid">
-    <button class="mob-nav-btn active" data-tab="home" data-title="My Membership"><span class="mob-icon">🪪</span><span class="mob-label">Membership</span></button>
-    <button class="mob-nav-btn" data-tab="classes" data-title="Book Classes"><span class="mob-icon">📅</span><span class="mob-label">Classes</span></button>
-  </div>
-</nav>
-<script type="module" src="js/pages/member.js"></script>
+  <!-- Portal chrome and pages are rendered by js/shared/shell.js from the feature modules. -->
+  <div id="app"></div>
+  <script type="module" src="js/entries/member.js"></script>
 </body>
 </html>

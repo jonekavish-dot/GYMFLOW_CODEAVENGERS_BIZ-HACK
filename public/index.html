@@ -3,26 +3,28 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>💪 A.S. Fitness — Sign In</title>
-  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='20' fill='%230d0f0e'/><text y='72' x='50' text-anchor='middle' font-size='52' font-family='Arial Black,sans-serif' font-weight='900' fill='%2339e56a'>AS</text></svg>">
+  <title>Sign In</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='22' fill='%230d0f0e'/><g fill='%2339e56a'><rect x='14' y='34' width='12' height='32' rx='3'/><rect x='74' y='34' width='12' height='32' rx='3'/><rect x='28' y='40' width='8' height='20' rx='2'/><rect x='64' y='40' width='8' height='20' rx='2'/><rect x='36' y='46' width='28' height='8' rx='2'/></g></svg>">
   <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;600;700;900&family=Barlow:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="css/app.css">
+  <link rel="stylesheet" href="assets/css/base.css">
+  <link rel="stylesheet" href="assets/css/components.css">
+  <link rel="stylesheet" href="assets/css/auth.css">
 </head>
 <body>
   <div class="lockscreen">
     <main class="lock-box">
       <svg class="lock-mark" width="60" height="60" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
         <rect width="100" height="100" rx="22" fill="#0d0f0e" stroke="#39e56a" stroke-width="3"/>
-        <text y="72" x="50" text-anchor="middle" font-size="50" font-family="Arial Black,sans-serif" font-weight="900" fill="#39e56a">AS</text>
+        <g fill="#39e56a"><rect x="14" y="34" width="12" height="32" rx="3"/><rect x="74" y="34" width="12" height="32" rx="3"/><rect x="28" y="40" width="8" height="20" rx="2"/><rect x="64" y="40" width="8" height="20" rx="2"/><rect x="36" y="46" width="28" height="8" rx="2"/></g>
       </svg>
-      <div class="lock-logo">A.S. FITNESS</div>
-      <div class="lock-sub">Membership &amp; Booking · Secure Access</div>
+      <div class="lock-logo" data-app-name></div>
+      <div class="lock-sub" data-app-tagline></div>
 
       <div id="conn" class="conn">Checking Firebase…</div>
       <p id="login-err" class="lock-err" role="alert"></p>
 
       <form id="login-form" autocomplete="on" onsubmit="return false">
-        <label>Email Address <input type="email" name="email" required autocomplete="username" placeholder="you@asfitness.com"></label>
+        <label>Email Address <input type="email" name="email" required autocomplete="username" placeholder="you@example.com"></label>
         <label>Password <input type="password" name="password" required autocomplete="current-password" placeholder="Your password"></label>
         <button type="submit" class="lock-btn">🔥 Sign In</button>
         <button type="button" id="forgot" class="lock-link">Forgot password?</button>
@@ -30,18 +32,18 @@
 
       <form id="setup-form" class="setup-box" hidden onsubmit="return false">
         <h3>⚡ First-time setup</h3>
-        <p>No admin exists yet. Create the owner account — this form disappears afterwards.</p>
-        <label>Name <input name="fullName" required placeholder="Shankar"></label>
+        <p>No admin exists yet. Create the admin account — this form disappears afterwards.</p>
+        <label>Name <input name="fullName" required placeholder="Your name"></label>
         <label>Email Address <input type="email" name="email" required autocomplete="username"></label>
         <label>Password <input type="password" name="password" required minlength="6" autocomplete="new-password"></label>
         <button type="submit" class="lock-btn">Create Admin Account</button>
       </form>
 
       <div class="lock-hint">
-        ℹ️ <span class="hl">Members:</span> your login is created by the gym when you register at the <strong>front desk</strong>. Same page for admins and members — you're taken to the right portal automatically.
+        ℹ️ <span class="hl">Members:</span> your login is created by an admin when you're registered. Admins and members use this same page — you're taken to the right portal automatically.
       </div>
     </main>
   </div>
-  <script type="module" src="js/pages/login.js"></script>
+  <script type="module" src="js/entries/login.js"></script>
 </body>
 </html>

@@ -1,74 +1,86 @@
-# PS76 — Gym Membership & Class Booking (BIZ HACK '26)
+# GymFlow — PS76 · BIZ HACK '26
 
-Vanilla JS (ES modules, no build step) + Firebase Auth + Firestore, deployed on Firebase Hosting.
-Kept separate from the existing A.S. Fitness portal in `../public`, so deploying this never touches the live gym data or rules.
+Gym membership & class booking system. Vanilla JS (ES modules, no build step) on Firebase Auth + Firestore + Hosting.
+
+- **Admin portal:** membership plans, member registration, class scheduling with capacity, expiry alerts, live occupancy.
+- **Member portal:** membership validity, class booking/cancelling with live seat counts, goals (these feed the AI recommendations).
+- **One login page** for both roles. Users are routed by the role stored in Firestore.
+
+## Structure
 
 ```
 ps76/
-├── firebase.json            hosting + firestore rules/indexes + emulator ports
-├── .firebaserc              → set your PS76 project id
-├── firestore.rules          role split, capacity-safe booking, expiry enforcement
+├── firebase.json · .firebaserc      hosting + rules + emulator config (project: ps76-gym)
+├── firestore.rules                  roles, capacity-safe booking, expiry enforcement
 ├── firestore.indexes.json
-├── public/
-│   ├── index.html           login + one-time "create first admin" setup
-│   ├── admin.html           admin portal (plans, members, classes, alerts, occupancy)
-│   ├── member.html          member portal (validity, goals, booking)
-│   ├── css/app.css
-│   └── js/
-│       ├── firebase-config.js   ← paste your web app config here
-│       ├── firebase.js          init (SDK 12.19.0), secondary-auth helper, connection probe
-│       ├── auth.js              sign in/out, role lookup, requireRole() page guard, bootstrap
-│       ├── ui.js                DOM helpers, toasts, tabs
-│       ├── pages/               login.js · admin.js · member.js
-│       └── services/            plans · members · classes · bookings · checkins · ai (Gemini)
-└── tests/                   Firestore rules tests (emulator)
+├── package.json                     npm test · npm run deploy · npm run serve
+├── tests/rules.test.js              Firestore rules tests (emulator)
+├── tools/deploy.cjs                 deploy via Firebase REST APIs (works with an Admin SDK key)
+└── public/                          ← what gets hosted
+    ├── index.html · admin.html · member.html   thin shells; each loads one entry script
+    ├── assets/css/
+    │   ├── base.css                 tokens, reset, keyframes
+    │   ├── components.css           KPI cards, panels, forms, buttons, tables, badges, toasts
+    │   ├── layout.css               portal shell: sidebar, topbar, pages, mobile nav
+    │   └── auth.css                 login page
+    └── js/
+        ├── config/
+        │   ├── app.config.js        product name / tagline — rename the app here
+        │   └── firebase.config.js   Firebase web config
+        ├── core/
+        │   ├── sdk/                 Firebase SDK re-exports (version pinned here)
+        │   ├── firebase.js          app/auth/db init, secondary auth, connection probe
+        │   └── auth.js              sign in/out, roles, requireRole() guard, first-admin bootstrap
+        ├── shared/
+        │   ├── shell.js             builds sidebar/topbar/pages/mobile nav from a module list
+        │   ├── dom.js · format.js · toast.js · forms.js
+        ├── modules/                 one folder per feature: *.service.js = data, *.view.js = UI
+        │   ├── dashboard/           admin KPIs, expiry alerts, occupancy
+        │   ├── members/             member registration + list (service used by others too)
+        │   ├── plans/               membership plans
+        │   ├── classes/             class scheduling
+        │   ├── membership/          member: validity, expiry banner, goals
+        │   ├── bookings/            member: book / cancel (transaction + rules)
+        │   ├── checkins/            QR check-in + occupancy (service; UI next)
+        │   └── ai/                  Gemini recommendations via Firebase AI Logic (service; UI next)
+        └── entries/                 page entry points: login.js · admin.js · member.js
 ```
+
+### Adding a feature
+
+1. Create `js/modules/<feature>/<feature>.service.js` (Firestore reads/writes) and `<feature>.view.js`:
+   ```js
+   export default {
+     id: 'feature', title: 'Page Title', label: 'Nav Label', icon: '✨', section: 'Main',
+     template: () => `<div class="panel">…</div>`,
+     init({ el, user, profile, shell }) { /* wire listeners, scoped to el */ },
+   };
+   ```
+2. Add it to the `modules` list in `js/entries/admin.js` or `member.js`. The sidebar, mobile nav and page are generated for you.
 
 ## Auth & roles
 
-- Role is stored in `users/{uid}.role` (`admin` | `member`). Only admins can write it, so members can't promote themselves.
-- **First admin:** on a fresh project, the login page shows a "First-time setup" form. It creates the account plus `config/bootstrap` in a single batch. The rules allow that only once.
-- **Members** don't sign themselves up. An admin registers them under Members → Register, which creates their login and membership. The admin stays signed in because a secondary Auth instance handles the new account.
-- Every protected page calls `requireRole('admin' | 'member')`. It sends signed-out users to login and users with the wrong role to their own portal.
+- The role lives in `users/{uid}.role` (`admin` | `member`). Only admins can write it.
+- **First admin:** on a fresh project, the login page shows a one-time setup form. The rules allow exactly one bootstrap.
+- **Members** are registered by an admin, who creates their login. The admin stays signed in because a secondary Auth instance handles the new account.
+- Every portal page calls `requireRole()`. Signed-out users go to login, and users with the wrong role go to their own portal.
 
-## Setup (≈5 min)
-
-1. [console.firebase.google.com](https://console.firebase.google.com) → **Add project** (e.g. `ps76-gym`).
-2. **Build → Authentication → Get started → Email/Password → Enable.**
-3. **Build → Firestore Database → Create database** (production mode, `asia-south1`).
-4. **Project settings → Your apps → Web (`</>`)** → copy the config into `public/js/firebase-config.js`.
-5. Put the project id in `.firebaserc`, then:
-   ```bash
-   npm i -g firebase-tools
-   firebase login
-   cd ps76
-   firebase deploy --only firestore:rules,firestore:indexes,hosting
-   ```
-6. Open the hosted URL → create the admin → add a plan → register a member → sign in as that member.
-7. (For AI recommendations) **Build → AI Logic → Get started → Gemini Developer API**. No API key goes in the code.
-
-Local dev without touching the cloud: set `USE_EMULATORS = true` in `firebase-config.js`, then run `firebase emulators:start` in `ps76/` and open http://127.0.0.1:5000.
-
-## Deploy from GitHub (no local CLI needed)
-
-`.github/workflows/deploy-ps76.yml` deploys hosting + rules + indexes to `ps76-gym` on every push to `main` (or this branch) that touches `ps76/`.
-One-time setup:
-1. Firebase Console → **Hosting → Get started** (just click through, to create the site).
-2. Firebase Console → ⚙ **Project settings → Service accounts → Generate new private key** → downloads a JSON file.
-3. GitHub repo → **Settings → Secrets and variables → Actions → New repository secret**
-   Name: `FIREBASE_SERVICE_ACCOUNT_PS76_GYM`, Value: paste the whole JSON file.
-4. GitHub → **Actions → Deploy PS76 to Firebase → Run workflow**. Live at **https://ps76-gym.web.app**.
-
-## Tests
+## Run, test, deploy
 
 ```bash
-cd ps76/tests && npm install && npm test   # needs Java for the Firestore emulator
+cd ps76
+npm install
+npm test                                  # rules tests (needs Java for the emulator)
+npm run serve                             # local emulators; set USE_EMULATORS = true in firebase.config.js
+GOOGLE_APPLICATION_CREDENTIALS=key.json npm run deploy   # rules + indexes + hosting → https://ps76-gym.web.app
 ```
-Covers: bootstrap only once, no self-promotion, member can't extend their own expiry, admin-only plans/classes, no overbooking, expired members can't book, no seat changes without a matching booking.
+
+No Node on your machine? Serve `public/` with `python -m http.server 5000` and open http://localhost:5000. It talks to the live project.
+
+**CI:** `.github/workflows/ps76.yml` runs the rules tests on every push/PR that touches `ps76/`. It deploys on pushes to `main` when the repo secret `FIREBASE_SERVICE_ACCOUNT_PS76_GYM` is set. Never commit or paste service-account keys.
 
 ## Next steps
 
-- QR check-in: render `qrPayload(uid)` on the member page; admin scanner → `checkIn(uid)` (`services/checkins.js`)
-- Occupancy dashboard: `watchOccupancy()` is already wired to the admin KPI; add check-out + chart
-- Gemini: call `recommendClasses(goals, classes)` from the member page (`services/ai.js`)
-- Expiry alerts: live on both portals now (≤ 7 days / expired); add email or WhatsApp later if time allows
+- QR check-in: member shows `qrPayload(uid)`, admin scans → `checkIn(uid)` (`modules/checkins`)
+- Occupancy dashboard: check-out + live chart on top of `watchOccupancy()`
+- Gemini: "Recommend classes" on the member portal using `recommendClasses(goals, classes)` (`modules/ai`)

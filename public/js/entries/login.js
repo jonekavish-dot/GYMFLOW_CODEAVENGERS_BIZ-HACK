@@ -1,8 +1,15 @@
-import { checkConnection } from '../firebase.js';
+// Login page entry: one sign-in for admins and members, routed by role; first-admin setup.
+import { checkConnection } from '../core/firebase.js';
 import {
   currentUser, getProfile, homeFor, signIn, resetPassword, bootstrapFirstAdmin, authErrorMessage,
-} from '../auth.js';
-import { $, busy } from '../ui.js';
+} from '../core/auth.js';
+import { $, $$ } from '../shared/dom.js';
+import { busy } from '../shared/forms.js';
+import { APP } from '../config/app.config.js';
+
+document.title = `${APP.name} — Sign In`;
+$$('[data-app-name]').forEach((el) => { el.textContent = APP.name; });
+$$('[data-app-tagline]').forEach((el) => { el.textContent = APP.tagline; });
 
 const errEl = $('#login-err');
 const showErr = (e) => { errEl.textContent = typeof e === 'string' ? e : authErrorMessage(e); };
