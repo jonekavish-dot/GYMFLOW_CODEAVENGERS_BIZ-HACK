@@ -1,0 +1,45 @@
+name: CI
+
+# Firestore rules tests on every push/PR; deploy to Firebase on pushes to main.
+# Deploy needs repo secret FIREBASE_SERVICE_ACCOUNT_PS76_GYM (service-account JSON key).
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 21
+      - run: npm ci
+      - run: npm test
+
+  deploy:
+    needs: test
+    if: github.event_name != 'pull_request' && (github.ref == 'refs/heads/main' || github.event_name == 'workflow_dispatch')
+    runs-on: ubuntu-latest
+    concurrency: deploy-gymflow
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: Deploy rules, indexes and hosting
+        env:
+          SA_KEY: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_PS76_GYM }}
+        run: |
+          if [ -z "$SA_KEY" ]; then echo "::error::Secret FIREBASE_SERVICE_ACCOUNT_PS76_GYM is not set"; exit 1; fi
+          printf '%s' "$SA_KEY" > "$RUNNER_TEMP/sa.json"
+          GOOGLE_APPLICATION_CREDENTIALS="$RUNNER_TEMP/sa.json" npm run deploy

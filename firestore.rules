@@ -10,6 +10,11 @@ rules_version = '2';
 //   classes/{classId}       { title, trainer, startAt, durationMin, capacity, bookedCount, tags }
 //   bookings/{classId_uid}  { classId, uid, classStartAt, createdAt }
 //   checkins/{id}           { uid, at, checkedOutAt, method }
+//   trainers/{id}           { name, role, exp, phone, skills, title, isOwner, active }
+//   attendance/{date_uid}   { date, uid, name, kind: 'member'|'trainer', status, exercises, notes }
+//   payments/{id}           { uid, memberName, amount, method, months, kind: 'join'|'renewal', at }
+//   config/exercises        { categories: {A..F}, custom }
+//   config/gym              { name, owner, phone, address, pricing }
 
 service cloud.firestore {
   match /databases/{database}/documents {
@@ -113,6 +118,26 @@ service cloud.firestore {
         && getAfter(classPath(resource.data.classId)).data.bookedCount
              == get(classPath(resource.data.classId)).data.bookedCount - 1);
       allow update: if false;
+    }
+
+    match /trainers/{id} {
+      allow read: if signedIn();
+      allow write: if isAdmin();
+    }
+
+    // One doc per person per day (id `${date}_${uid}`) rather than one fat doc per
+    // date, so a member can read their own history without seeing everyone else's.
+    match /attendance/{id} {
+      allow get: if isAdmin() || (signedIn() && resource.data.uid == request.auth.uid);
+      allow list: if isAdmin() || (signedIn() && resource.data.uid == request.auth.uid);
+      allow write: if isAdmin();
+    }
+
+    // Revenue ledger: joins and renewals. Written by admins only; members see their own.
+    match /payments/{id} {
+      allow get: if isAdmin() || (signedIn() && resource.data.uid == request.auth.uid);
+      allow list: if isAdmin() || (signedIn() && resource.data.uid == request.auth.uid);
+      allow write: if isAdmin();
     }
 
     match /checkins/{id} {
