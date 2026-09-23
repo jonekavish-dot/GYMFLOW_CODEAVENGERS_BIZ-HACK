@@ -130,15 +130,9 @@ service cloud.firestore {
         && onlyChanged(['bookedCount'])
         && request.resource.data.bookedCount >= 0
         && request.resource.data.bookedCount <= resource.data.capacity
-        && (
-          (request.resource.data.bookedCount == resource.data.bookedCount + 1
-            && !exists(slotBookingPath(slotId + '_' + request.auth.uid))
-            && existsAfter(slotBookingPath(slotId + '_' + request.auth.uid)))
-          ||
-          (request.resource.data.bookedCount == resource.data.bookedCount - 1
-            && exists(slotBookingPath(slotId + '_' + request.auth.uid))
-            && !existsAfter(slotBookingPath(slotId + '_' + request.auth.uid)))
-        ));
+        && request.resource.data.bookedCount == resource.data.bookedCount + 1
+        && !exists(slotBookingPath(slotId + '_' + request.auth.uid))
+        && existsAfter(slotBookingPath(slotId + '_' + request.auth.uid)));
     }
 
     match /slot_bookings/{bookingId} {
@@ -151,10 +145,7 @@ service cloud.firestore {
         && get(slotPath(request.resource.data.slotId)).data.status != 'closed'
         && getAfter(slotPath(request.resource.data.slotId)).data.bookedCount
              == get(slotPath(request.resource.data.slotId)).data.bookedCount + 1;
-      allow delete: if isAdmin() || (signedIn()
-        && resource.data.uid == request.auth.uid
-        && getAfter(slotPath(resource.data.slotId)).data.bookedCount
-             == get(slotPath(resource.data.slotId)).data.bookedCount - 1);
+      allow delete: if isAdmin();
       allow update: if false;
     }
 

@@ -62,7 +62,6 @@ export default {
             <td data-label="When">${fmtDateTime(s.startAt)} <span class="sub">${s.durationMin} min</span></td>
             <td class="row-actions">
               <span class="status-badge status-active">✓ Booked</span>
-              <button class="btn btn-ghost btn-sm" data-cancel-slot="${s.id}">Cancel</button>
             </td>
           </tr>`).join('')
         : '<tr class="empty"><td colspan="3">You have no upcoming workout slots booked.</td></tr>';
@@ -118,20 +117,6 @@ export default {
           customId: memberData?.customId || '',
         });
         toast('Slot booked! 🎉');
-      } catch (e) {
-        toast(authErrorMessage(e), 'err');
-        btn.disabled = false;
-      }
-    });
-
-    // Cancel
-    $('#my-slot-rows', el).addEventListener('click', async (ev) => {
-      const btn = ev.target.closest('[data-cancel-slot]');
-      if (!btn) return;
-      btn.disabled = true;
-      try {
-        await cancelSlotBooking(btn.dataset.cancelSlot, user.uid);
-        toast('Slot booking cancelled');
       } catch (e) {
         toast(authErrorMessage(e), 'err');
         btn.disabled = false;

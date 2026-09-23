@@ -176,14 +176,20 @@ describe('gym slot booking', () => {
 
   it('expired member cannot book slot', () => assertFails(bookGymSlot(as('old'), 's1', 'old')));
 
-  it('member can cancel slot booking and release seat', async () => {
+  it('member cannot cancel or delete slot booking', async () => {
     const db = as('m1');
     await bookGymSlot(db, 's1', 'm1');
-    await assertSucceeds(runTransaction(db, async (tx) => {
+    await assertFails(runTransaction(db, async (tx) => {
       const s = await tx.get(doc(db, 'slots/s1'));
       tx.update(doc(db, 'slots/s1'), { bookedCount: s.data().bookedCount - 1 });
       tx.delete(doc(db, 'slot_bookings/s1_m1'));
     }));
+    await assertFails(deleteDoc(doc(db, 'slot_bookings/s1_m1')));
+  });
+
+  it('admin can delete slot bookings', async () => {
+    await bookGymSlot(as('m1'), 's1', 'm1');
+    await assertSucceeds(deleteDoc(doc(as('admin'), 'slot_bookings/s1_m1')));
   });
 });
 
