@@ -14,13 +14,14 @@ export const slotBookingId = (slotId, uid) => `${slotId}_${uid}`;
 /**
  * Admin creates a workout slot with a specific time window and max customer overload (capacity).
  */
-export function createSlot({ title, startAt, endAt, durationMin, capacity, notes = '', status = 'open' }) {
+export function createSlot({ title, trainer = '', startAt, endAt, durationMin, capacity, notes = '', status = 'open' }) {
   const start = new Date(startAt);
   const end = endAt ? new Date(endAt) : new Date(start.getTime() + Number(durationMin) * 60000);
   const duration = durationMin ? Number(durationMin) : Math.round((end.getTime() - start.getTime()) / 60000);
 
   return addDoc(slotsCol, {
     title,
+    trainer: trainer.trim(),
     startAt: Timestamp.fromDate(start),
     endAt: Timestamp.fromDate(end),
     durationMin: duration,

@@ -3,6 +3,7 @@
 import {
   createSlot, deleteSlot, updateSlotStatus, watchUpcomingSlots, watchSlotBookings,
 } from './slots.service.js';
+import { watchTrainers } from '../trainers/trainers.service.js';
 import { $, esc } from '../../shared/dom.js';
 import { fmtDateTime } from '../../shared/format.js';
 import { onSubmit } from '../../shared/forms.js';
@@ -21,7 +22,12 @@ export default {
     <div class="grid-2">
       <form id="slot-form" class="panel" onsubmit="return false">
         <div class="panel-hdr"><div class="panel-ttl">+ Create Gym Slot</div></div>
-        <label>Slot Title / Area <input name="slotTitle" required placeholder="e.g. Morning Workout (Floor A)"></label>
+        <div class="form-row">
+          <label>Slot Title / Area <input name="slotTitle" required placeholder="e.g. Morning Workout (Floor A)"></label>
+          <label>Assign Trainer <select name="trainer" id="slot-trainer">
+            <option value="">No Trainer / Open Gym</option>
+          </select></label>
+        </div>
         <div class="form-row">
           <label>Starts At <input type="datetime-local" name="startAt" required></label>
           <label>Duration (mins) <input type="number" name="durationMin" min="15" step="15" value="60" required></label>
@@ -71,7 +77,11 @@ export default {
               : `${s.bookedCount} / ${s.capacity}`;
 
           return `<tr>
-            <td data-label="Slot"><strong>${esc(s.title)}</strong>${s.notes ? `<span class="sub">${esc(s.notes)}</span>` : ''}</td>
+            <td data-label="Slot">
+              <strong>${esc(s.title)}</strong>
+              ${s.trainer ? `<span class="sub">🧑‍🏫 ${esc(s.trainer)}</span>` : ''}
+              ${s.notes ? `<span class="sub">${esc(s.notes)}</span>` : ''}
+            </td>
             <td data-label="When">${fmtDateTime(s.startAt)} <span class="sub">${s.durationMin} min</span></td>
             <td data-label="Booked"><span class="status-badge status-${badgeClass}">${badgeText}</span></td>
             <td data-label="Status">
@@ -87,6 +97,15 @@ export default {
         }).join('')
         : '<tr class="empty"><td colspan="5">No upcoming workout slots created yet.</td></tr>';
     };
+
+    watchTrainers((trainers) => {
+      const select = $('#slot-trainer', el);
+      if (!select) return;
+      const current = select.value;
+      select.innerHTML = `
+        <option value="">No Trainer / Open Gym</option>
+        ${trainers.filter((t) => t.active !== false).map((t) => `<option value="${esc(t.name)}" ${t.name === current ? 'selected' : ''}>${esc(t.name)} (${esc(t.role || 'Trainer')})</option>`).join('')}`;
+    });
 
     watchUpcomingSlots((list) => { slots = list; render(); });
 
@@ -119,6 +138,7 @@ export default {
     onSubmit($('#slot-form', el), async (f) => {
       await createSlot({
         title: f.slotTitle.value.trim(),
+        trainer: f.trainer.value.trim(),
         startAt: f.startAt.value,
         durationMin: f.durationMin.value,
         capacity: f.capacity.value,
@@ -139,6 +159,7 @@ export default {
           <div class="panel-hdr">
             <div>
               <strong>${fmtDateTime(slot.startAt)}</strong>
+              ${slot.trainer ? `<div class="sub">🧑‍🏫 Trainer: <strong>${esc(slot.trainer)}</strong></div>` : ''}
               <div class="muted small">Max capacity: ${slot.capacity} · Booked: <span id="roster-count">${slot.bookedCount}</span></div>
             </div>
             <span class="status-badge status-${slot.bookedCount >= slot.capacity ? 'expired' : 'active'}">

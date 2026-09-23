@@ -25,7 +25,7 @@ export default {
         <span class="panel-tag" id="my-slots-count">0</span>
       </div>
       <div class="table-wrap"><table class="data-table">
-        <thead><tr><th>Slot</th><th>When</th><th></th></tr></thead>
+        <thead><tr><th>Slot</th><th>When</th><th>Status</th></tr></thead>
         <tbody id="my-slot-rows">
           <tr class="empty"><td colspan="3">You have no upcoming workout slots booked.</td></tr>
         </tbody>
@@ -52,15 +52,19 @@ export default {
     let canBook = false;
 
     const render = () => {
-      // ── My booked slots ──
+      // ── My booked slots (no cancel button — confirmed once booked) ──
       const myBooked = allSlots.filter((s) => bookedSlotIds.has(s.id));
       $('#my-slots-count', el).textContent = myBooked.length;
 
       $('#my-slot-rows', el).innerHTML = myBooked.length
         ? myBooked.map((s) => `<tr>
-            <td data-label="Slot"><strong>${esc(s.title)}</strong>${s.notes ? `<span class="sub">${esc(s.notes)}</span>` : ''}</td>
+            <td data-label="Slot">
+              <strong>${esc(s.title)}</strong>
+              ${s.trainer ? `<span class="sub">🧑‍🏫 Trainer: ${esc(s.trainer)}</span>` : ''}
+              ${s.notes ? `<span class="sub">${esc(s.notes)}</span>` : ''}
+            </td>
             <td data-label="When">${fmtDateTime(s.startAt)} <span class="sub">${s.durationMin} min</span></td>
-            <td class="row-actions">
+            <td data-label="Status">
               <span class="status-badge status-active">✓ Booked</span>
             </td>
           </tr>`).join('')
@@ -79,7 +83,11 @@ export default {
           const left = Math.max(0, s.capacity - (s.bookedCount || 0));
           const seat = left <= 3 ? 'expiring' : 'active';
           return `<tr>
-            <td data-label="Slot"><strong>${esc(s.title)}</strong>${s.notes ? `<span class="sub">${esc(s.notes)}</span>` : ''}</td>
+            <td data-label="Slot">
+              <strong>${esc(s.title)}</strong>
+              ${s.trainer ? `<span class="sub">🧑‍🏫 Trainer: ${esc(s.trainer)}</span>` : ''}
+              ${s.notes ? `<span class="sub">${esc(s.notes)}</span>` : ''}
+            </td>
             <td data-label="When">${fmtDateTime(s.startAt)} <span class="sub">${s.durationMin} min</span></td>
             <td data-label="Spots Left"><span class="status-badge status-${seat}">${left} / ${s.capacity}</span></td>
             <td class="row-actions">
