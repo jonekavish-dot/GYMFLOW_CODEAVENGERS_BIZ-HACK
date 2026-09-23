@@ -1,5 +1,5 @@
 import {
-  collection, doc, onSnapshot, orderBy, query, runTransaction, serverTimestamp, where,
+  collection, doc, onSnapshot, query, runTransaction, serverTimestamp, where,
 } from 'https://www.gstatic.com/firebasejs/12.19.0/firebase-firestore.js';
 import { db } from '../firebase.js';
 
@@ -34,7 +34,10 @@ export function cancelBooking(classId, uid) {
   });
 }
 
+// Sorted client-side so the query needs no composite index (a member has few bookings).
 export function watchMyBookings(uid, cb) {
-  const q = query(collection(db, 'bookings'), where('uid', '==', uid), orderBy('classStartAt'));
-  return onSnapshot(q, (snap) => cb(snap.docs.map((d) => ({ id: d.id, ...d.data() }))));
+  const q = query(collection(db, 'bookings'), where('uid', '==', uid));
+  return onSnapshot(q, (snap) => cb(snap.docs
+    .map((d) => ({ id: d.id, ...d.data() }))
+    .sort((a, b) => (a.classStartAt?.toMillis?.() ?? 0) - (b.classStartAt?.toMillis?.() ?? 0))));
 }
