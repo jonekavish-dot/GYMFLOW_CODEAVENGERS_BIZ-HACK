@@ -3,92 +3,141 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>A.S. Fitness · Admin</title>
+  <title>💪 A.S. Fitness — Admin</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='20' fill='%230d0f0e'/><text y='72' x='50' text-anchor='middle' font-size='52' font-family='Arial Black,sans-serif' font-weight='900' fill='%2339e56a'>AS</text></svg>">
+  <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;600;700;900&family=Barlow:wght@300;400;500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="css/app.css">
 </head>
-<body class="app" hidden>
-  <header class="topbar">
-    <h1 class="brand">A.S. <span>Fitness</span> <small>Admin</small></h1>
-    <div class="who"><span id="who"></span><button id="logout" class="btn btn-ghost">Sign out</button></div>
-  </header>
+<body hidden>
+<div class="app">
+  <aside class="sidebar">
+    <div class="sb-logo">
+      <div class="brand">A.S. FITNESS</div>
+      <div class="sub">Admin · Booking System</div>
+    </div>
+    <nav class="sb-nav">
+      <div class="nav-sec">Main</div>
+      <button class="nav-item active" data-tab="dashboard" data-title="Overview Dashboard"><span class="ni">📊</span>Dashboard<span id="nav-alerts" class="nav-badge" hidden></span></button>
+      <button class="nav-item" data-tab="members" data-title="Members"><span class="ni">👥</span>Members</button>
+      <div class="nav-sec">Operations</div>
+      <button class="nav-item" data-tab="classes" data-title="Class Schedule"><span class="ni">📅</span>Classes</button>
+      <button class="nav-item" data-tab="plans" data-title="Membership Plans"><span class="ni">💳</span>Plans</button>
+    </nav>
+    <div class="owner-card">
+      <div class="ow-av" id="ow-av">–</div>
+      <div class="ow-name" id="who">–</div>
+      <div class="ow-title">Gym Admin</div>
+      <div class="ow-badges"><span class="ow-badge">🏆 Admin</span><span class="ow-badge">🔥 Firebase</span></div>
+    </div>
+    <div class="sb-foot">PS76 · BIZ HACK '26</div>
+  </aside>
 
-  <nav class="tabs">
-    <button data-tab="dashboard" class="active">Dashboard</button>
-    <button data-tab="members">Members</button>
-    <button data-tab="plans">Plans</button>
-    <button data-tab="classes">Classes</button>
-  </nav>
-
-  <main>
-    <section data-panel="dashboard">
-      <div class="kpis">
-        <div class="kpi"><span>Members</span><strong id="kpi-members">–</strong></div>
-        <div class="kpi"><span>Expiring ≤ 7d</span><strong id="kpi-expiring">–</strong></div>
-        <div class="kpi"><span>Expired</span><strong id="kpi-expired">–</strong></div>
-        <div class="kpi"><span>Inside now</span><strong id="kpi-occupancy">–</strong></div>
+  <div class="main">
+    <header class="topbar">
+      <div class="tb-left">
+        <h2 id="page-title">Overview Dashboard</h2>
+        <div class="dateline" id="dateline"></div>
       </div>
-      <div class="card">
-        <h2>Membership alerts</h2>
+      <div class="tb-right">
+        <span class="live-badge"><span class="live-dot"></span>Live</span>
+        <span class="user-tag"><span class="av" id="tb-av">–</span><span class="who-txt"><span class="nm" id="tb-name">–</span><span class="rl">Admin</span></span></span>
+        <button id="logout" class="btn btn-danger btn-sm">🔓 Logout</button>
+      </div>
+    </header>
+
+    <!-- DASHBOARD -->
+    <section class="page" data-panel="dashboard">
+      <div class="sec-title">Key Metrics</div>
+      <div class="kpi-grid">
+        <div class="kpi-card" style="--card-accent:#39e56a"><div class="kpi-lbl">👥 Members</div><div class="kpi-val" id="kpi-members">–</div><div class="kpi-sub">Registered</div></div>
+        <div class="kpi-card" style="--card-accent:#f5a623"><div class="kpi-lbl">⏳ Expiring ≤ 7d</div><div class="kpi-val" id="kpi-expiring">–</div><div class="kpi-sub">Renew soon</div></div>
+        <div class="kpi-card" style="--card-accent:#e53935"><div class="kpi-lbl">⛔ Expired</div><div class="kpi-val" id="kpi-expired">–</div><div class="kpi-sub">Can't book classes</div></div>
+        <div class="kpi-card" style="--card-accent:#4da6ff"><div class="kpi-lbl">🏋️ Inside Now</div><div class="kpi-val" id="kpi-occupancy">–</div><div class="kpi-sub">Live occupancy</div></div>
+      </div>
+      <div class="sec-title">Members &amp; Alerts</div>
+      <div class="panel">
+        <div class="panel-hdr"><div class="panel-ttl">🔔 Membership Alerts</div><span class="panel-tag">Auto</span></div>
         <ul id="alerts" class="list"><li class="muted">Loading…</li></ul>
       </div>
     </section>
 
-    <section data-panel="members" hidden>
+    <!-- MEMBERS -->
+    <section class="page" data-panel="members" hidden>
       <div class="grid-2">
-        <form id="member-form" class="card" onsubmit="return false">
-          <h2>Register member</h2>
-          <label>Full name <input name="fullName" required></label>
+        <form id="member-form" class="panel" onsubmit="return false">
+          <div class="panel-hdr"><div class="panel-ttl">+ Register Member</div></div>
+          <label>Full Name <input name="fullName" required></label>
           <label>Email <input type="email" name="email" required></label>
-          <label>Phone <input type="tel" name="phone"></label>
-          <label>Temporary password <input name="password" required minlength="6"></label>
+          <div class="form-row">
+            <label>Phone <input type="tel" name="phone"></label>
+            <label>Temp Password <input name="password" required minlength="6"></label>
+          </div>
           <label>Plan <select name="planId" required></select></label>
-          <label>Start date <input type="date" name="startDate" required></label>
+          <label>Start Date <input type="date" name="startDate" required></label>
           <label>Goals <textarea name="goals" rows="2" placeholder="e.g. lose 5 kg, build stamina"></textarea></label>
-          <button type="submit" class="btn btn-primary">Register</button>
+          <button type="submit" class="btn btn-primary btn-block">Register Member</button>
         </form>
-        <div class="card">
-          <h2>Members</h2>
-          <table class="table"><thead><tr><th>Name</th><th>Plan</th><th>Status</th></tr></thead><tbody id="member-rows"></tbody></table>
+        <div class="panel">
+          <div class="panel-hdr"><div class="panel-ttl">All Members</div></div>
+          <div class="table-wrap"><table class="data-table"><thead><tr><th>Member</th><th>Plan</th><th>Expiry</th><th>Status</th></tr></thead><tbody id="member-rows"></tbody></table></div>
         </div>
       </div>
     </section>
 
-    <section data-panel="plans" hidden>
+    <!-- PLANS -->
+    <section class="page" data-panel="plans" hidden>
       <div class="grid-2">
-        <form id="plan-form" class="card" onsubmit="return false">
-          <h2>New membership plan</h2>
+        <form id="plan-form" class="panel" onsubmit="return false">
+          <div class="panel-hdr"><div class="panel-ttl">+ New Plan</div></div>
           <label>Name <input name="planName" required placeholder="Monthly"></label>
-          <label>Duration (days) <input type="number" name="durationDays" min="1" required value="30"></label>
-          <label>Price (₹) <input type="number" name="price" min="0" required></label>
+          <div class="form-row">
+            <label>Duration (days) <input type="number" name="durationDays" min="1" required value="30"></label>
+            <label>Price (₹) <input type="number" name="price" min="0" required></label>
+          </div>
           <label>Description <input name="description"></label>
-          <button type="submit" class="btn btn-primary">Create plan</button>
+          <button type="submit" class="btn btn-primary btn-block">Create Plan</button>
         </form>
-        <div class="card">
-          <h2>Plans</h2>
+        <div class="panel">
+          <div class="panel-hdr"><div class="panel-ttl">Plans</div></div>
           <ul id="plan-list" class="list"></ul>
         </div>
       </div>
     </section>
 
-    <section data-panel="classes" hidden>
+    <!-- CLASSES -->
+    <section class="page" data-panel="classes" hidden>
       <div class="grid-2">
-        <form id="class-form" class="card" onsubmit="return false">
-          <h2>Schedule class</h2>
+        <form id="class-form" class="panel" onsubmit="return false">
+          <div class="panel-hdr"><div class="panel-ttl">+ Schedule Class</div></div>
           <label>Title <input name="classTitle" required placeholder="HIIT Blast"></label>
           <label>Trainer <input name="trainer" required></label>
           <label>Starts <input type="datetime-local" name="startAt" required></label>
-          <label>Duration (min) <input type="number" name="durationMin" min="10" value="60" required></label>
-          <label>Capacity <input type="number" name="capacity" min="1" value="20" required></label>
+          <div class="form-row">
+            <label>Duration (min) <input type="number" name="durationMin" min="10" value="60" required></label>
+            <label>Capacity <input type="number" name="capacity" min="1" value="20" required></label>
+          </div>
           <label>Tags <input name="tags" placeholder="cardio, strength, beginner"></label>
-          <button type="submit" class="btn btn-primary">Schedule</button>
+          <button type="submit" class="btn btn-primary btn-block">Schedule Class</button>
         </form>
-        <div class="card">
-          <h2>Upcoming classes</h2>
-          <table class="table"><thead><tr><th>Class</th><th>When</th><th>Booked</th><th></th></tr></thead><tbody id="class-rows"></tbody></table>
+        <div class="panel">
+          <div class="panel-hdr"><div class="panel-ttl">Upcoming Classes</div><span class="panel-tag">Live</span></div>
+          <div class="table-wrap"><table class="data-table"><thead><tr><th>Class</th><th>When</th><th>Booked</th><th></th></tr></thead><tbody id="class-rows"></tbody></table></div>
         </div>
       </div>
     </section>
-  </main>
-  <script type="module" src="js/pages/admin.js"></script>
+
+    <footer class="footer-bar"><span>A.S. Fitness · PS76 Membership &amp; Booking</span><span>Synced live via <span class="hl">Firebase</span></span></footer>
+  </div>
+</div>
+
+<nav class="mobile-nav">
+  <div class="mob-nav-grid">
+    <button class="mob-nav-btn active" data-tab="dashboard" data-title="Overview Dashboard"><span class="mob-icon">📊</span><span class="mob-label">Home</span></button>
+    <button class="mob-nav-btn" data-tab="members" data-title="Members"><span class="mob-icon">👥</span><span class="mob-label">Members</span></button>
+    <button class="mob-nav-btn" data-tab="classes" data-title="Class Schedule"><span class="mob-icon">📅</span><span class="mob-label">Classes</span></button>
+    <button class="mob-nav-btn" data-tab="plans" data-title="Membership Plans"><span class="mob-icon">💳</span><span class="mob-label">Plans</span></button>
+  </div>
+</nav>
+<script type="module" src="js/pages/admin.js"></script>
 </body>
 </html>

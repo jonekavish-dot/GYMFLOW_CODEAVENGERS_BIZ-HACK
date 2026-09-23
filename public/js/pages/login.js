@@ -56,5 +56,5 @@ if (user) {
 const conn = await checkConnection();
 const connEl = $('#conn');
 connEl.className = `conn conn-${conn.ok ? 'ok' : 'err'}`;
-connEl.textContent = `● ${conn.message}`;
+connEl.textContent = conn.message;
 if (conn.ok && !conn.bootstrapped) $('#setup-form').hidden = false;

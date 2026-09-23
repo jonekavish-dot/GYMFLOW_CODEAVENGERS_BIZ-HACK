@@ -3,13 +3,11 @@ import { registerMember, watchMembers, membershipStatus } from '../services/memb
 import { createPlan, watchPlans } from '../services/plans.js';
 import { createClass, deleteClass, watchUpcomingClasses } from '../services/classes.js';
 import { watchOccupancy } from '../services/checkins.js';
-import { $, esc, toast, fmtDate, fmtDateTime, initTabs, busy } from '../ui.js';
+import { $, esc, toast, fmtDate, fmtDateTime, initShell, busy } from '../ui.js';
 
 const { profile } = await requireRole('admin');
-document.body.hidden = false;
-$('#who').textContent = profile.name || profile.email;
+initShell(profile);
 $('#logout').addEventListener('click', signOut);
-initTabs();
 
 const today = new Date().toISOString().slice(0, 10);
 $('#member-form').startDate.value = today;
@@ -19,8 +17,8 @@ let plans = [];
 watchPlans((list) => {
   plans = list;
   $('#plan-list').innerHTML = list.length
-    ? list.map((p) => `<li><strong>${esc(p.name)}</strong> · ${p.durationDays} days · ₹${p.price}
-        ${p.active ? '' : '<span class="pill pill-muted">inactive</span>'}<br><span class="muted">${esc(p.description)}</span></li>`).join('')
+    ? list.map((p) => `<li><span class="plan-tag">${esc(p.name)}</span> <strong>₹${p.price}</strong> <span class="muted">· ${p.durationDays} days</span>
+        ${p.active ? '' : '<span class="status-badge status-muted">Inactive</span>'}${p.description ? `<span class="muted small" style="flex-basis:100%">${esc(p.description)}</span>` : ''}</li>`).join('')
     : '<li class="muted">No plans yet — create one first, members need a plan.</li>';
   const active = list.filter((p) => p.active);
   $('#member-form').planId.innerHTML = active.length
@@ -43,9 +41,10 @@ $('#plan-form').addEventListener('submit', (ev) => {
 watchMembers((members) => {
   const rows = members.map((m) => ({ m, s: membershipStatus(m.expiryDate) }));
   $('#member-rows').innerHTML = rows.length
-    ? rows.map(({ m, s }) => `<tr><td>${esc(m.name)}<br><span class="muted small">${esc(m.email)}</span></td>
-        <td>${esc(m.planName)}</td><td><span class="pill pill-${s.key}">${s.label}</span></td></tr>`).join('')
-    : '<tr><td colspan="3" class="muted">No members yet.</td></tr>';
+    ? rows.map(({ m, s }) => `<tr><td><strong>${esc(m.name)}</strong><span class="sub">${esc(m.email)}</span></td>
+        <td><span class="plan-tag">${esc(m.planName)}</span></td><td>${fmtDate(m.expiryDate)}</td>
+        <td><span class="status-badge status-${s.key}">${s.label}</span></td></tr>`).join('')
+    : '<tr class="empty"><td colspan="4">No members yet — register one on the left.</td></tr>';
 
   const expiring = rows.filter((r) => r.s.key === 'expiring');
   const expired = rows.filter((r) => r.s.key === 'expired');
@@ -53,9 +52,12 @@ watchMembers((members) => {
   $('#kpi-expiring').textContent = expiring.length;
   $('#kpi-expired').textContent = expired.length;
   const alerts = [...expired, ...expiring];
+  $('#nav-alerts').hidden = !alerts.length;
+  $('#nav-alerts').textContent = alerts.length;
   $('#alerts').innerHTML = alerts.length
-    ? alerts.map(({ m, s }) => `<li><span class="pill pill-${s.key}">${s.label}</span> ${esc(m.name)} · ${esc(m.planName)} · ends ${fmtDate(m.expiryDate)}</li>`).join('')
-    : '<li class="muted">All memberships are healthy.</li>';
+    ? alerts.map(({ m, s }) => `<li><span class="status-badge status-${s.key}">${s.label}</span> <strong>${esc(m.name)}</strong>
+        <span class="muted">· ${esc(m.planName)} · ends ${fmtDate(m.expiryDate)}</span></li>`).join('')
+    : '<li class="muted">✅ All memberships are healthy.</li>';
 });
 
 $('#member-form').addEventListener('submit', (ev) => {
@@ -78,10 +80,14 @@ $('#member-form').addEventListener('submit', (ev) => {
 // ── Classes ──
 watchUpcomingClasses((classes) => {
   $('#class-rows').innerHTML = classes.length
-    ? classes.map((c) => `<tr><td>${esc(c.title)}<br><span class="muted small">${esc(c.trainer)}</span></td>
-        <td>${fmtDateTime(c.startAt)}</td><td>${c.bookedCount}/${c.capacity}</td>
-        <td><button class="btn btn-ghost btn-sm" data-del="${c.id}">Delete</button></td></tr>`).join('')
-    : '<tr><td colspan="4" class="muted">No upcoming classes.</td></tr>';
+    ? classes.map((c) => {
+      const full = c.bookedCount >= c.capacity;
+      return `<tr><td><strong>${esc(c.title)}</strong><span class="sub">${esc(c.trainer)}</span></td>
+        <td>${fmtDateTime(c.startAt)}</td>
+        <td><span class="status-badge status-${full ? 'expired' : 'active'}">${c.bookedCount}/${c.capacity}</span></td>
+        <td><button class="btn btn-danger btn-sm" data-del="${c.id}">Delete</button></td></tr>`;
+    }).join('')
+    : '<tr class="empty"><td colspan="4">No upcoming classes.</td></tr>';
 });
 
 $('#class-rows').addEventListener('click', async (ev) => {

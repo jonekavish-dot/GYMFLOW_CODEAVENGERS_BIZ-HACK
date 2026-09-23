@@ -6,10 +6,12 @@ export function esc(s) {
 }
 
 export function toast(msg, kind = 'ok') {
+  let box = $('.toasts');
+  if (!box) { box = document.createElement('div'); box.className = 'toasts'; document.body.append(box); }
   const el = document.createElement('div');
   el.className = `toast toast-${kind}`;
   el.textContent = msg;
-  document.body.append(el);
+  box.append(el);
   setTimeout(() => el.remove(), 3500);
 }
 
@@ -23,13 +25,34 @@ export function fmtDateTime(ts) {
   return d.toLocaleString(undefined, { weekday: 'short', day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' });
 }
 
-/** Tab switching for [data-tab] buttons → [data-panel] sections. */
+/** Tab switching: sidebar and mobile-nav [data-tab] buttons → [data-panel] pages; updates the topbar title. */
 export function initTabs(onChange) {
   $$('[data-tab]').forEach((btn) => btn.addEventListener('click', () => {
-    $$('[data-tab]').forEach((b) => b.classList.toggle('active', b === btn));
-    $$('[data-panel]').forEach((p) => { p.hidden = p.dataset.panel !== btn.dataset.tab; });
-    onChange?.(btn.dataset.tab);
+    const tab = btn.dataset.tab;
+    $$('[data-tab]').forEach((b) => b.classList.toggle('active', b.dataset.tab === tab));
+    $$('[data-panel]').forEach((p) => { p.hidden = p.dataset.panel !== tab; });
+    if (btn.dataset.title) $('#page-title').textContent = btn.dataset.title;
+    window.scrollTo(0, 0);
+    onChange?.(tab);
   }));
+}
+
+export const initials = (name) => String(name || '?').split(/\s+/).filter(Boolean).slice(0, 2).map((w) => w[0].toUpperCase()).join('');
+
+/** Fills the portal chrome (sidebar card, topbar tag, dateline) and wires tabs. */
+export function initShell(profile) {
+  const name = profile.name || profile.email;
+  $('#who').textContent = name;
+  $('#tb-name').textContent = name;
+  $('#ow-av').textContent = initials(name);
+  $('#tb-av').textContent = initials(name);
+  const tick = () => {
+    $('#dateline').textContent = new Date().toLocaleString(undefined, { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+  };
+  tick();
+  setInterval(tick, 30000);
+  initTabs();
+  document.body.hidden = false;
 }
 
 /** Disables a form's submit button while `fn` runs. */
