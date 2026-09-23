@@ -123,12 +123,12 @@ export default {
       render: (m) => {
         const s = membershipStatus(m.expiryDate);
         return `<tr>
-          <td><div class="cell-user"><span class="av-sm">${esc(initials(m.name))}</span>
+          <td data-label="Member"><div class="cell-user"><span class="av-sm">${esc(initials(m.name))}</span>
             <span><strong>${esc(m.name)}</strong><span class="sub">${esc(m.customId || m.email)}</span></span></div></td>
-          <td><span class="plan-tag">${esc(m.planName)}</span></td>
-          <td><span class="cat-tag">${esc(m.exerciseCategory || '–')}</span></td>
-          <td>${fmtINR(m.paid)}</td>
-          <td>${fmtDate(m.expiryDate)}<span class="sub"><span class="status-badge status-${s.key}">${s.label}</span></span></td>
+          <td data-label="Plan"><span class="plan-tag">${esc(m.planName)}</span></td>
+          <td data-label="Category"><span class="cat-tag">${esc(m.exerciseCategory || '–')}</span></td>
+          <td data-label="Paid">${fmtINR(m.paid)}</td>
+          <td data-label="Expiry">${fmtDate(m.expiryDate)}<span class="sub"><span class="status-badge status-${s.key}">${s.label}</span></span></td>
           <td class="row-actions">
             <button class="btn btn-primary btn-sm" data-renew="${m.uid}">Renew</button>
             <button class="btn btn-ghost btn-sm" data-view="${m.uid}">View</button>

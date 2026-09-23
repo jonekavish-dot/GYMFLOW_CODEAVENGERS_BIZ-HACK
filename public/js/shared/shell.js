@@ -7,6 +7,7 @@ import { $, $$, esc } from './dom.js';
 import { fmtLongNow, initials } from './format.js';
 import { APP } from '../config/app.config.js';
 import { signOut } from '../core/auth.js';
+import { onInstallState, promptInstall } from '../core/pwa.js';
 
 export function mountShell({ root = $('#app'), roleLabel, subtitle, user, profile, modules }) {
   const name = profile.name || profile.email;
@@ -35,6 +36,7 @@ export function mountShell({ root = $('#app'), roleLabel, subtitle, user, profil
         <div class="tb-right">
           <span class="live-badge"><span class="live-dot"></span>Live</span>
           <span class="user-tag"><span class="av">${esc(initials(name))}</span><span class="who-txt"><span class="nm">${esc(name)}</span><span class="rl">${esc(roleLabel)}</span></span></span>
+          <button id="install-app" class="btn btn-ghost btn-sm" hidden>⬇ Install</button>
           <button id="logout" class="btn btn-danger btn-sm">🔓 Logout</button>
         </div>
       </header>
@@ -48,6 +50,11 @@ export function mountShell({ root = $('#app'), roleLabel, subtitle, user, profil
 
   document.title = `${APP.name} — ${roleLabel}`;
   $('#logout').addEventListener('click', signOut);
+
+  const installBtn = $('#install-app');
+  onInstallState(({ canInstall }) => { installBtn.hidden = !canInstall; });
+  installBtn.addEventListener('click', promptInstall);
+
   const tick = () => { $('#dateline').textContent = fmtLongNow(); };
   tick();
   setInterval(tick, 30000);
@@ -57,6 +64,9 @@ export function mountShell({ root = $('#app'), roleLabel, subtitle, user, profil
     $$('[data-tab]').forEach((b) => b.classList.toggle('active', b.dataset.tab === id));
     $$('[data-panel]').forEach((p) => { p.hidden = p.dataset.panel !== id; });
     $('#page-title').textContent = m.title;
+    // The mobile nav scrolls sideways once there are more tabs than fit; keep the
+    // active one visible so the current page is never off-screen.
+    $(`.mob-nav-btn[data-tab="${id}"]`)?.scrollIntoView({ block: 'nearest', inline: 'center', behavior: 'smooth' });
   };
   $$('[data-tab]').forEach((b) => b.addEventListener('click', () => { show(b.dataset.tab); window.scrollTo(0, 0); }));
 

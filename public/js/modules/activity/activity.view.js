@@ -62,9 +62,9 @@ export default {
       $('#ac-visits', el).textContent = rows.filter((r) => r.status === STATUS.PRESENT).length;
       $('#ac-att', el).innerHTML = rows.length
         ? rows.slice(0, 30).map((r) => `<tr>
-            <td>${esc(r.date)}</td>
-            <td><span class="status-badge status-${r.status === STATUS.PRESENT ? 'active' : 'muted'}">${esc(r.status)}</span></td>
-            <td>${(r.exercises || []).length ? (r.exercises || []).map((x) => `<span class="chip">${esc(x)}</span>`).join('') : '<span class="muted">–</span>'}</td>
+            <td data-label="Date">${esc(r.date)}</td>
+            <td data-label="Status"><span class="status-badge status-${r.status === STATUS.PRESENT ? 'active' : 'muted'}">${esc(r.status)}</span></td>
+            <td data-label="Exercises">${(r.exercises || []).length ? (r.exercises || []).map((x) => `<span class="chip">${esc(x)}</span>`).join('') : '<span class="muted">–</span>'}</td>
           </tr>`).join('')
         : '<tr class="empty"><td colspan="3">No attendance recorded yet.</td></tr>';
     });
@@ -73,11 +73,11 @@ export default {
       payments = rows;
       $('#ac-pay', el).innerHTML = rows.length
         ? rows.map((p) => `<tr>
-            <td>${p.at ? fmtDate(p.at) : '–'}</td>
-            <td><span class="plan-tag">${esc(p.planName)}</span> <span class="muted small">${p.months || 1} mo</span></td>
-            <td>${p.kind === 'renewal' ? 'Renewal' : 'Joining'}</td>
-            <td><strong>${fmtINR(p.amount)}</strong></td>
-            <td><button class="btn btn-ghost btn-sm" data-receipt="${p.id}">🧾 Receipt</button></td>
+            <td data-label="Date">${p.at ? fmtDate(p.at) : '–'}</td>
+            <td data-label="Plan"><span class="plan-tag">${esc(p.planName)}</span> <span class="muted small">${p.months || 1} mo</span></td>
+            <td data-label="Type">${p.kind === 'renewal' ? 'Renewal' : 'Joining'}</td>
+            <td data-label="Amount"><strong>${fmtINR(p.amount)}</strong></td>
+            <td class="row-actions"><button class="btn btn-ghost btn-sm" data-receipt="${p.id}">🧾 Receipt</button></td>
           </tr>`).join('')
         : '<tr class="empty"><td colspan="5">No payments recorded yet.</td></tr>';
     });

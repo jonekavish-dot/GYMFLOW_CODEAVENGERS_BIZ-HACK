@@ -67,13 +67,13 @@ export default {
       },
       match: (p) => [p.memberName, p.customId, p.planName, p.method, p.kind].join(' '),
       render: (p) => `<tr>
-        <td>${p.at ? fmtDate(p.at) : '–'}</td>
-        <td><strong>${esc(p.memberName)}</strong><span class="sub">${esc(p.customId || '')}</span></td>
-        <td><span class="plan-tag">${esc(p.planName)}</span><span class="sub">${p.months || 1} mo</span></td>
-        <td><span class="status-badge status-${p.kind === 'renewal' ? 'expiring' : 'active'}">${p.kind === 'renewal' ? 'Renewal' : 'Joining'}</span></td>
-        <td>${esc(p.method || 'Cash')}</td>
-        <td><strong>${fmtINR(p.amount)}</strong></td>
-        <td><button class="btn btn-ghost btn-sm" data-receipt="${p.id}">🧾</button></td>
+        <td data-label="Date">${p.at ? fmtDate(p.at) : '–'}</td>
+        <td data-label="Member"><strong>${esc(p.memberName)}</strong><span class="sub">${esc(p.customId || '')}</span></td>
+        <td data-label="Plan"><span class="plan-tag">${esc(p.planName)}</span><span class="sub">${p.months || 1} mo</span></td>
+        <td data-label="Type"><span class="status-badge status-${p.kind === 'renewal' ? 'expiring' : 'active'}">${p.kind === 'renewal' ? 'Renewal' : 'Joining'}</span></td>
+        <td data-label="Method">${esc(p.method || 'Cash')}</td>
+        <td data-label="Amount"><strong>${fmtINR(p.amount)}</strong></td>
+        <td class="row-actions"><button class="btn btn-ghost btn-sm" data-receipt="${p.id}">🧾 Receipt</button></td>
       </tr>`,
     });
 

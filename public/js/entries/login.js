@@ -6,6 +6,9 @@ import {
 import { $, $$ } from '../shared/dom.js';
 import { busy } from '../shared/forms.js';
 import { APP } from '../config/app.config.js';
+import { initPWA, onInstallState, promptInstall } from '../core/pwa.js';
+
+initPWA();
 
 document.title = `${APP.name} — Sign In`;
 $$('[data-app-name]').forEach((el) => { el.textContent = APP.name; });
@@ -51,6 +54,10 @@ $('#setup-form').addEventListener('submit', (ev) => {
     } catch (e) { showErr(e); }
   });
 });
+
+const installBtn = $('#install-app');
+onInstallState(({ canInstall }) => { installBtn.hidden = !canInstall; });
+installBtn.addEventListener('click', promptInstall);
 
 // Listeners are attached above first so an early submit never falls through to a native form GET.
 // Already signed in → straight to the right portal.

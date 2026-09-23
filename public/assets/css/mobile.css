@@ -1,0 +1,129 @@
+/* Mobile + installed-app refinements. Loaded last so it can correct the desktop rules.
+   Breakpoints: 900px = sidebar collapses to bottom nav, 600px = phone, 420px = small phone. */
+
+/* Dynamic viewport units: on mobile Chrome the URL bar makes 100vh taller than the
+   visible area, which pushes the footer under the bottom nav. */
+@supports (height: 100dvh) {
+  .app { min-height: 100dvh; }
+  .lockscreen { min-height: 100dvh; }
+}
+
+/* Never let a wide child force a horizontal scroll of the whole page. */
+.main, .page { min-width: 0; max-width: 100%; }
+.kpi-grid, .grid-2, .att-list, .trainer-grid { min-width: 0; }
+
+/* ── Install button on the login page ── */
+.install-cta { display: block; width: 100%; margin-top: 14px; padding: 11px; border-radius: 10px; cursor: pointer;
+  background: rgba(57, 229, 106, .08); border: 1px solid var(--accent-dim); color: var(--accent);
+  font: 700 12px var(--font-b); letter-spacing: .06em; text-transform: uppercase; transition: all var(--tr); }
+.install-cta:hover { background: rgba(57, 229, 106, .16); }
+
+/* ── Installed (standalone) ── */
+/* No browser chrome, so the topbar sits under the status bar / notch. */
+@media (display-mode: standalone) {
+  .topbar { padding-top: env(safe-area-inset-top); height: calc(58px + env(safe-area-inset-top)); }
+  .install-cta, #install-app { display: none !important; }
+}
+
+@media (max-width: 900px) {
+  /* The bottom nav holds up to 9 admin tabs; fixed columns would crush them to ~40px,
+     so it scrolls sideways instead and shell.js keeps the active tab in view. */
+  .mob-nav-grid { grid-auto-columns: minmax(62px, 1fr); overflow-x: auto; overscroll-behavior-x: contain;
+    scrollbar-width: none; -ms-overflow-style: none; scroll-snap-type: x proximity; }
+  .mob-nav-grid::-webkit-scrollbar { display: none; }
+  .mob-nav-btn { min-width: 62px; scroll-snap-align: center; }
+  .mob-nav-btn .mob-label { max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  /* Fade hint that there is more nav off to the right. */
+  .mobile-nav::after { content: ''; position: absolute; top: 0; bottom: 0; right: 0; width: 22px; pointer-events: none;
+    background: linear-gradient(90deg, transparent, var(--bg-panel)); }
+
+  .main { padding-bottom: calc(76px + env(safe-area-inset-bottom)); }
+  .grid-2 { grid-template-columns: 1fr; }
+  .panel { padding: 15px; }
+  .chart-box { height: 210px; }
+}
+
+@media (max-width: 600px) {
+  /* Comfortable tap targets and no iOS zoom-on-focus (inputs must be >= 16px). */
+  .panel input, .panel select, .panel textarea,
+  .modal-body input, .modal-body select, .modal-body textarea,
+  .search-input { font-size: 16px; padding: 11px 12px; }
+  .btn { padding: 9px 14px; }
+  .btn-sm { padding: 7px 11px; font-size: 11.5px; }
+  .tab-btn { padding: 10px 14px; }
+
+  .kpi-grid { grid-template-columns: repeat(2, 1fr); gap: 10px; }
+  .kpi-val { font-size: 26px; }
+  .page { padding: 14px 12px; }
+
+  /* Header tools stack: search takes the row, exports sit under it. */
+  .panel-hdr { flex-wrap: wrap; }
+  .hdr-tools { width: 100%; justify-content: flex-start; }
+  .search-input { flex: 1 1 100%; min-width: 0; }
+  .export-row { width: 100%; }
+  .export-row .btn { flex: 1; }
+  .att-controls { width: 100%; }
+  .att-controls .search-input { flex: 1 1 auto; }
+
+  /* ── Tables become cards ──
+     A 7-column table on a 360px screen is unusable sideways-scrolling. Each row
+     becomes a card and each cell shows its column name from data-label. */
+  .data-table, .data-table tbody, .data-table tr, .data-table td { display: block; width: 100%; }
+  .data-table thead { display: none; }
+  .data-table tr { margin-bottom: 10px; padding: 12px 14px; border-radius: var(--r);
+    background: var(--bg-card); border: 1px solid var(--border); }
+  .data-table tbody tr:hover td { background: none; }
+  .data-table td { border: 0; padding: 5px 0; display: flex; align-items: center; justify-content: space-between; gap: 12px; text-align: right; }
+  .data-table td::before { content: attr(data-label); flex-shrink: 0; text-align: left;
+    font-size: 9.5px; font-weight: 600; letter-spacing: .12em; text-transform: uppercase; color: var(--text-label); }
+  .data-table td:not([data-label]) { justify-content: flex-start; text-align: left; }
+  .data-table td .sub { margin-top: 2px; }
+  /* Identity cell leads the card, full width, no label. */
+  .data-table td[data-label="Member"], .data-table td[data-label="Class"] { justify-content: flex-start; text-align: left;
+    padding-bottom: 9px; margin-bottom: 4px; border-bottom: 1px dashed var(--border); }
+  .data-table td[data-label="Member"]::before, .data-table td[data-label="Class"]::before { display: none; }
+  .data-table td.row-actions { justify-content: flex-start; flex-wrap: wrap; padding-top: 10px; }
+  .data-table td.row-actions::before { display: none; }
+  .data-table td.row-actions .btn { flex: 1; min-width: 72px; }
+  .data-table tr.empty { text-align: center; }
+  .data-table tr.empty td { display: block; justify-content: center; text-align: center; color: var(--text-muted); }
+  .data-table tr.empty td::before { display: none; }
+  .table-wrap { overflow-x: visible; }
+
+  .pager { flex-direction: column; gap: 8px; }
+
+  /* Modals: full-width sheet anchored to the top so long content can scroll. */
+  .modal-back { align-items: flex-start; padding: 10px; }
+  .modal, .modal-wide { max-width: 100%; margin: 4px 0 20px; }
+  .modal-body { padding: 15px; max-height: none; }
+  .modal-foot { flex-direction: column-reverse; }
+  .modal-foot .btn { width: 100%; }
+  .facts { grid-template-columns: 1fr; gap: 2px 0; }
+  .facts dt { margin-top: 8px; }
+
+  .att-card { padding: 12px; }
+  .att-actions .btn { flex: 1; }
+  .toasts { left: 12px; right: 12px; }
+  .toast { width: 100%; }
+  .idle-warn { font-size: 11px; padding: 8px 10px; }
+}
+
+@media (max-width: 420px) {
+  /* Paired fields are too tight to share a row on a small phone. */
+  .form-row, .modal-body .form-row { grid-template-columns: 1fr; gap: 0; }
+  .kpi-grid { grid-template-columns: 1fr; }
+  .kpi-val { font-size: 30px; }
+  .theme-row { flex-direction: column; }
+  .theme-row .btn { width: 100%; }
+  .inline-form { flex-direction: column; align-items: stretch; gap: 8px; }
+  .inline-form .btn { width: 100%; }
+  .cat-editor { flex-direction: column; align-items: stretch; }
+  .cat-editor .btn { width: 100%; }
+}
+
+/* Landscape phones: the bottom nav eats too much of a short viewport. */
+@media (max-height: 460px) and (orientation: landscape) and (max-width: 900px) {
+  .mob-nav-btn { flex-direction: row; gap: 6px; padding: 5px; }
+  .mob-nav-btn .mob-icon { font-size: 14px; }
+  .main { padding-bottom: 54px; }
+}

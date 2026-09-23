@@ -1,5 +1,6 @@
 // Admin portal entry: guard the page, then mount the admin feature modules.
 import { requireRole } from '../core/auth.js';
+import { initPWA } from '../core/pwa.js';
 import { mountShell } from '../shared/shell.js';
 import { startIdleLogout } from '../shared/idle.js';
 import { applyTheme, getTheme } from '../modules/settings/settings.service.js';
@@ -14,6 +15,7 @@ import analytics from '../modules/analytics/analytics.view.js';
 import settings from '../modules/settings/settings.view.js';
 
 applyTheme(getTheme());
+initPWA();
 const { user, profile } = await requireRole('admin');
 mountShell({
   roleLabel: 'Admin',

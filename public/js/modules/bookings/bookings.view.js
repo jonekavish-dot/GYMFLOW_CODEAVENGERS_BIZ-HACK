@@ -38,8 +38,8 @@ export default {
             : `<button class="btn btn-primary btn-sm" data-book="${c.id}" ${!canBook || left <= 0 ? 'disabled' : ''}>${left <= 0 ? 'Full' : 'Book'}</button>`;
           const seat = left <= 0 ? 'expired' : left <= 3 ? 'expiring' : 'active';
           const tags = (c.tags || []).length ? ` · ${esc(c.tags.join(', '))}` : '';
-          return `<tr><td><strong>${esc(c.title)}</strong><span class="sub">${esc(c.trainer)}${tags}</span></td>
-            <td>${fmtDateTime(c.startAt)}</td><td><span class="status-badge status-${seat}">${left} / ${c.capacity}</span></td><td>${action}</td></tr>`;
+          return `<tr><td data-label="Class"><strong>${esc(c.title)}</strong><span class="sub">${esc(c.trainer)}${tags}</span></td>
+            <td data-label="When">${fmtDateTime(c.startAt)}</td><td data-label="Seats Left"><span class="status-badge status-${seat}">${left} / ${c.capacity}</span></td><td class="row-actions">${action}</td></tr>`;
         }).join('')
         : '<tr class="empty"><td colspan="4">No upcoming classes yet.</td></tr>';
     };

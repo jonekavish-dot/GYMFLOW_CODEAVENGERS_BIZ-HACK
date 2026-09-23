@@ -41,10 +41,10 @@ export default {
       $('#class-rows', el).innerHTML = classes.length
         ? classes.map((c) => {
           const full = c.bookedCount >= c.capacity;
-          return `<tr><td><strong>${esc(c.title)}</strong><span class="sub">${esc(c.trainer)}</span></td>
-            <td>${fmtDateTime(c.startAt)}</td>
-            <td><span class="status-badge status-${full ? 'expired' : 'active'}">${c.bookedCount}/${c.capacity}</span></td>
-            <td><button class="btn btn-danger btn-sm" data-del="${c.id}">Delete</button></td></tr>`;
+          return `<tr><td data-label="Class"><strong>${esc(c.title)}</strong><span class="sub">${esc(c.trainer)}</span></td>
+            <td data-label="When">${fmtDateTime(c.startAt)}</td>
+            <td data-label="Booked"><span class="status-badge status-${full ? 'expired' : 'active'}">${c.bookedCount}/${c.capacity}</span></td>
+            <td class="row-actions"><button class="btn btn-danger btn-sm" data-del="${c.id}">Delete</button></td></tr>`;
         }).join('')
         : '<tr class="empty"><td colspan="4">No upcoming classes.</td></tr>';
     });
