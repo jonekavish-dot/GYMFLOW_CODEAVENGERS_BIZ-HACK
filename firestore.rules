@@ -25,6 +25,8 @@ service cloud.firestore {
     function memberPath(uid) { return /databases/$(database)/documents/members/$(uid); }
     function classPath(id) { return /databases/$(database)/documents/classes/$(id); }
     function bookingPath(id) { return /databases/$(database)/documents/bookings/$(id); }
+    function slotPath(id) { return /databases/$(database)/documents/slots/$(id); }
+    function slotBookingPath(id) { return /databases/$(database)/documents/slot_bookings/$(id); }
     function bootstrapPath() { return /databases/$(database)/documents/config/bootstrap; }
 
     function isAdmin() {
@@ -117,6 +119,42 @@ service cloud.firestore {
         && resource.data.uid == request.auth.uid
         && getAfter(classPath(resource.data.classId)).data.bookedCount
              == get(classPath(resource.data.classId)).data.bookedCount - 1);
+      allow update: if false;
+    }
+
+    // ── Gym Slots ──
+    match /slots/{slotId} {
+      allow read: if signedIn();
+      allow create, delete: if isAdmin();
+      allow update: if isAdmin() || (signedIn()
+        && onlyChanged(['bookedCount'])
+        && request.resource.data.bookedCount >= 0
+        && request.resource.data.bookedCount <= resource.data.capacity
+        && (
+          (request.resource.data.bookedCount == resource.data.bookedCount + 1
+            && !exists(slotBookingPath(slotId + '_' + request.auth.uid))
+            && existsAfter(slotBookingPath(slotId + '_' + request.auth.uid)))
+          ||
+          (request.resource.data.bookedCount == resource.data.bookedCount - 1
+            && exists(slotBookingPath(slotId + '_' + request.auth.uid))
+            && !existsAfter(slotBookingPath(slotId + '_' + request.auth.uid)))
+        ));
+    }
+
+    match /slot_bookings/{bookingId} {
+      allow get: if isAdmin() || (signedIn() && bookingId.matches('.*_' + request.auth.uid));
+      allow list: if isAdmin() || (signedIn() && resource.data.uid == request.auth.uid);
+      allow create: if signedIn()
+        && request.resource.data.uid == request.auth.uid
+        && bookingId == request.resource.data.slotId + '_' + request.auth.uid
+        && hasActiveMembership(request.auth.uid)
+        && get(slotPath(request.resource.data.slotId)).data.status != 'closed'
+        && getAfter(slotPath(request.resource.data.slotId)).data.bookedCount
+             == get(slotPath(request.resource.data.slotId)).data.bookedCount + 1;
+      allow delete: if isAdmin() || (signedIn()
+        && resource.data.uid == request.auth.uid
+        && getAfter(slotPath(resource.data.slotId)).data.bookedCount
+             == get(slotPath(resource.data.slotId)).data.bookedCount - 1);
       allow update: if false;
     }
 

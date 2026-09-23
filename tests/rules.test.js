@@ -30,6 +30,9 @@ async function seed(data) {
 
 const member = (days) => ({ name: 'M', email: 'm@x.com', planName: 'Monthly', goals: '', expiryDate: Timestamp.fromMillis(Date.now() + days * DAY) });
 const cls = (bookedCount, capacity = 2) => ({ title: 'HIIT', trainer: 'T', capacity, bookedCount, startAt: Timestamp.fromMillis(Date.now() + DAY) });
+const slot = (bookedCount, capacity = 2, status = 'open') => ({
+  title: 'Morning Workout', capacity, bookedCount, status, startAt: Timestamp.fromMillis(Date.now() + DAY),
+});
 
 function bootstrapBatch(db, uid, role = 'admin') {
   const b = writeBatch(db);
@@ -43,6 +46,14 @@ function book(db, classId, uid) {
     const c = await tx.get(doc(db, 'classes', classId));
     tx.update(doc(db, 'classes', classId), { bookedCount: c.data().bookedCount + 1 });
     tx.set(doc(db, 'bookings', `${classId}_${uid}`), { classId, uid, classStartAt: c.data().startAt });
+  });
+}
+
+function bookGymSlot(db, slotId, uid) {
+  return runTransaction(db, async (tx) => {
+    const s = await tx.get(doc(db, 'slots', slotId));
+    tx.update(doc(db, 'slots', slotId), { bookedCount: s.data().bookedCount + 1 });
+    tx.set(doc(db, 'slot_bookings', `${slotId}_${uid}`), { slotId, uid, slotStartAt: s.data().startAt });
   });
 }
 
@@ -136,6 +147,43 @@ describe('class booking', () => {
   it('cannot delete a booking without releasing the seat', async () => {
     await book(as('m1'), 'c1', 'm1');
     await assertFails(deleteDoc(doc(as('m1'), 'bookings/c1_m1')));
+  });
+});
+
+describe('gym slot booking', () => {
+  beforeEach(() => seed({
+    'users/admin': { role: 'admin' },
+    'users/m1': { role: 'member' }, 'members/m1': member(30),
+    'users/m2': { role: 'member' }, 'members/m2': member(30),
+    'users/old': { role: 'member' }, 'members/old': member(-1),
+    'slots/s1': slot(0, 1),
+    'slots/s_closed': slot(0, 5, 'closed'),
+  }));
+
+  it('admin can create slots, members cannot', async () => {
+    await assertSucceeds(setDoc(doc(as('admin'), 'slots/s9'), slot(0, 10)));
+    await assertFails(setDoc(doc(as('m1'), 'slots/s9'), slot(0, 10)));
+  });
+
+  it('active member can book a slot', () => assertSucceeds(bookGymSlot(as('m1'), 's1', 'm1')));
+
+  it('cannot overbook past customer overload capacity', async () => {
+    await bookGymSlot(as('m1'), 's1', 'm1');
+    await assertFails(bookGymSlot(as('m2'), 's1', 'm2'));
+  });
+
+  it('cannot book a closed slot', () => assertFails(bookGymSlot(as('m1'), 's_closed', 'm1')));
+
+  it('expired member cannot book slot', () => assertFails(bookGymSlot(as('old'), 's1', 'old')));
+
+  it('member can cancel slot booking and release seat', async () => {
+    const db = as('m1');
+    await bookGymSlot(db, 's1', 'm1');
+    await assertSucceeds(runTransaction(db, async (tx) => {
+      const s = await tx.get(doc(db, 'slots/s1'));
+      tx.update(doc(db, 'slots/s1'), { bookedCount: s.data().bookedCount - 1 });
+      tx.delete(doc(db, 'slot_bookings/s1_m1'));
+    }));
   });
 });
 
