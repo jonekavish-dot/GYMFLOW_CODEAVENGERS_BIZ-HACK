@@ -5,12 +5,13 @@
 // access is controlled by firestore.rules. Keep the Gemini key OUT of this file —
 // AI calls go through Firebase AI Logic (see js/services/ai.js).
 export const firebaseConfig = {
-  apiKey: 'YOUR_API_KEY',
-  authDomain: 'YOUR_PROJECT_ID.firebaseapp.com',
-  projectId: 'YOUR_PROJECT_ID',
-  storageBucket: 'YOUR_PROJECT_ID.firebasestorage.app',
-  messagingSenderId: 'YOUR_SENDER_ID',
-  appId: 'YOUR_APP_ID',
+  apiKey: 'AIzaSyCKGMUMeaYfBBwXM68PJw9k89QegwZRuG8',
+  authDomain: 'ps76-gym.firebaseapp.com',
+  projectId: 'ps76-gym',
+  storageBucket: 'ps76-gym.firebasestorage.app',
+  messagingSenderId: '847680492592',
+  appId: '1:847680492592:web:87180dc9c47b93429009f5',
+  measurementId: 'G-195X0YYGDJ',
 };
 
 // Set to true to run against `firebase emulators:start` instead of the live project.
