@@ -1,7 +1,7 @@
 // Member · Gym Slots — browse available gym workout slots with live capacity,
 // book/cancel slots. Slots reaching max customer capacity are automatically hidden.
 import {
-  bookSlot, cancelSlotBooking, watchUpcomingSlots, watchMySlotBookings,
+  bookSlot, watchUpcomingSlots, watchMySlotBookings,
 } from './slots.service.js';
 import { watchMember, membershipStatus } from '../members/members.service.js';
 import { $, esc } from '../../shared/dom.js';
