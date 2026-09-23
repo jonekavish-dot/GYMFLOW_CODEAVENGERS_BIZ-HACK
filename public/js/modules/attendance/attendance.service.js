@@ -38,13 +38,25 @@ export function clearMark(date, uid) {
   return deleteDoc(doc(db, 'attendance', rowId(date, uid)));
 }
 
-/** All rows for one day, keyed by uid. */
+/**
+ * All rows for one day, keyed by uid — admin only. Firestore can only serve a
+ * rules-filtered `list` query when it's constrained by the same field the rule
+ * checks (`uid`); a member querying by `date` alone throws permission-denied even
+ * for their own row, because the rule engine can't prove that's safe in general.
+ * See watchOwnDay() for the member-safe equivalent.
+ */
 export function watchDay(date, cb) {
   return onSnapshot(query(attCol, where('date', '==', date)), (snap) => {
     const byUid = {};
     snap.docs.forEach((d) => { byUid[d.data().uid] = { id: d.id, ...d.data() }; });
     cb(byUid);
   });
+}
+
+/** One person's record for one day — the member-safe version of watchDay(). */
+export function watchOwnDay(uid, date, cb) {
+  return onSnapshot(query(attCol, where('uid', '==', uid), where('date', '==', date)), (snap) =>
+    cb(snap.empty ? null : { id: snap.docs[0].id, ...snap.docs[0].data() }));
 }
 
 /** Index-free history for one person, newest first. */

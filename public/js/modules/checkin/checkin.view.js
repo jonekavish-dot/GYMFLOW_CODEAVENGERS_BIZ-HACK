@@ -4,9 +4,11 @@
 // the sidebar.
 import { selfCheckIn, checkOut, watchMyOpenCheckin } from '../checkins/checkins.service.js';
 import { watchMember, membershipStatus } from '../members/members.service.js';
+import { mark, watchOwnDay, STATUS } from '../attendance/attendance.service.js';
+import { exercisesFor, watchExercises } from '../exercises/exercises.service.js';
 import { startScanner } from '../../shared/qrscan.js';
-import { $, $$ } from '../../shared/dom.js';
-import { fmtDateTime } from '../../shared/format.js';
+import { $, $$, esc } from '../../shared/dom.js';
+import { fmtDateTime, todayStr } from '../../shared/format.js';
 import { toast } from '../../shared/toast.js';
 import { authErrorMessage } from '../../core/auth.js';
 
@@ -23,6 +25,19 @@ export default {
       <div class="checkin-active-icon">✅</div>
       <div class="checkin-active-ttl">You're checked in</div>
       <div class="checkin-active-sub" id="checkin-since"></div>
+
+      <div id="today-exercises" class="checkin-today" hidden>
+        <div class="checkin-today-hdr">Today's Exercises</div>
+        <div class="chip-row" id="today-ex-chips"></div>
+        <button type="button" class="btn btn-ghost btn-sm" id="edit-exercises-btn">Edit</button>
+      </div>
+
+      <div id="exercise-picker" class="checkin-picker" hidden>
+        <div class="checkin-today-hdr">What are you training today?</div>
+        <div class="ex-grid" id="checkin-ex-grid"></div>
+        <button type="button" class="btn btn-primary btn-block" id="save-exercises-btn" disabled>Save &amp; Start Workout</button>
+      </div>
+
       <button type="button" class="btn btn-danger btn-block" id="checkout-btn">Check Out</button>
     </div>
 
@@ -57,12 +72,71 @@ export default {
     let stopScan = null;
     let submitting = false;
     let isOpen = false;
+    let member = null;
+    let allExercises = [];
+    let picking = false; // true while the "Edit" button has forced the picker open
 
     watchMember(user.uid, (m) => {
       if (!m) return;
+      member = m;
       canCheckIn = membershipStatus(m.expiryDate).key !== 'expired';
       $('#checkin-expired-notice', el).hidden = canCheckIn;
       $$('[data-mode-panel] button, .otp-box', el).forEach((n) => { n.disabled = !canCheckIn; });
+      renderPicker();
+    });
+
+    watchExercises(({ all }) => { allExercises = all; renderPicker(); });
+
+    // ── Post-check-in exercise picker: reuses the same "present needs >=1 exercise"
+    // rule the admin attendance card enforces, just filed by the member themselves. ──
+    let todaysExercises = [];
+    function renderPicker() {
+      const rotation = member ? exercisesFor(member.exerciseCategory).filter((x) => x !== 'Rest') : [];
+      const extras = allExercises.filter((x) => !rotation.includes(x));
+      const chip = (x) => `<label class="ex-chk${todaysExercises.includes(x) ? ' on' : ''}">
+        <input type="checkbox" data-pick="${esc(x)}" ${todaysExercises.includes(x) ? 'checked' : ''}>${esc(x)}</label>`;
+      $('#checkin-ex-grid', el).innerHTML = `${rotation.map(chip).join('')}
+        ${extras.length ? `<details class="ex-more"><summary>+ ${extras.length} more</summary><div class="ex-grid">${extras.map(chip).join('')}</div></details>` : ''}`;
+
+      const done = todaysExercises.length > 0 && !picking;
+      $('#today-exercises', el).hidden = !done;
+      $('#exercise-picker', el).hidden = done;
+      if (done) {
+        $('#today-ex-chips', el).innerHTML = todaysExercises.map((x) => `<span class="chip">${esc(x)}</span>`).join('');
+      }
+    }
+
+    $('#checkin-ex-grid', el).addEventListener('change', (ev) => {
+      const box = ev.target.closest('[data-pick]');
+      if (!box) return;
+      todaysExercises = box.checked
+        ? [...new Set([...todaysExercises, box.dataset.pick])]
+        : todaysExercises.filter((x) => x !== box.dataset.pick);
+      $('#save-exercises-btn', el).disabled = todaysExercises.length === 0;
+      box.closest('.ex-chk').classList.toggle('on', box.checked);
+    });
+
+    $('#save-exercises-btn', el).addEventListener('click', async () => {
+      const btn = $('#save-exercises-btn', el);
+      btn.disabled = true;
+      try {
+        await mark({
+          date: todayStr(), uid: user.uid, name: member?.name || user.email,
+          kind: 'member', status: STATUS.PRESENT, exercises: todaysExercises,
+        });
+        picking = false;
+        toast('Marked present — have a great workout! 💪');
+      } catch (e) {
+        toast(authErrorMessage(e) || e.message, 'err');
+        btn.disabled = false;
+      }
+    });
+
+    $('#edit-exercises-btn', el).addEventListener('click', () => { picking = true; renderPicker(); });
+
+    watchOwnDay(user.uid, todayStr(), (mine) => {
+      todaysExercises = mine?.exercises || [];
+      renderPicker();
     });
 
     /** @returns {Promise<boolean>} whether the check-in actually succeeded */

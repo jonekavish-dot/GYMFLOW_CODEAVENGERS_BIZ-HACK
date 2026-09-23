@@ -209,6 +209,7 @@ describe('attendance', () => {
     'users/admin': { role: 'admin' },
     'users/m1': { role: 'member' }, 'members/m1': member(30),
     'users/m2': { role: 'member' }, 'members/m2': member(30),
+    'users/old': { role: 'member' }, 'members/old': member(-1),
     'attendance/2026-09-23_m1': { date: '2026-09-23', uid: 'm1', kind: 'member', status: 'present', exercises: ['Chest & Abs'] },
   }));
 
@@ -220,8 +221,28 @@ describe('attendance', () => {
     await assertFails(getDoc(doc(as('m2'), 'attendance/2026-09-23_m1')));
   });
 
-  it('member cannot mark themselves present', () => assertFails(setDoc(doc(as('m1'), 'attendance/2026-09-23_m1'),
-    { date: '2026-09-23', uid: 'm1', kind: 'member', status: 'present', exercises: ['Chest & Abs'] })));
+  // Self-marking exists so a check-in can flow straight into "pick your exercises".
+  it('member marks themselves present with at least one exercise', () => assertSucceeds(
+    setDoc(doc(as('m2'), 'attendance/2026-09-23_m2'),
+      { date: '2026-09-23', uid: 'm2', kind: 'member', status: 'present', exercises: ['Chest & Abs'] })));
+
+  it('member cannot mark present with zero exercises', () => assertFails(
+    setDoc(doc(as('m2'), 'attendance/2026-09-23_m2'),
+      { date: '2026-09-23', uid: 'm2', kind: 'member', status: 'present', exercises: [] })));
+
+  it('member cannot mark themselves absent', () => assertFails(
+    updateDoc(doc(as('m1'), 'attendance/2026-09-23_m1'), { status: 'absent' })));
+
+  it('member cannot mark someone else present', () => assertFails(
+    setDoc(doc(as('m1'), 'attendance/2026-09-23_m2'),
+      { date: '2026-09-23', uid: 'm2', kind: 'member', status: 'present', exercises: ['Chest & Abs'] })));
+
+  it('expired member cannot self-mark present', () => assertFails(
+    setDoc(doc(as('old'), 'attendance/2026-09-23_old'),
+      { date: '2026-09-23', uid: 'old', kind: 'member', status: 'present', exercises: ['Chest & Abs'] })));
+
+  it('member cannot delete their own attendance row', () => assertFails(
+    deleteDoc(doc(as('m1'), 'attendance/2026-09-23_m1'))));
 });
 
 describe('payments', () => {
