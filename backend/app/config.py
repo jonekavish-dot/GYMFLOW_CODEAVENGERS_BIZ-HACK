@@ -13,6 +13,9 @@ class Settings(BaseSettings):
     # Any SQLAlchemy URL. A Neon/Postgres URL works as-is, e.g.
     # postgresql://user:pass@ep-xxx.neon.tech/db?sslmode=require
     database_url: str = "sqlite:///./gymflow.db"
+    # Serverless hosts run many small instances, so keep each one's pool small.
+    db_pool_size: int = 5
+    db_max_overflow: int = 5
 
     jwt_secret: str = INSECURE_SECRET
     jwt_algorithm: str = "HS256"

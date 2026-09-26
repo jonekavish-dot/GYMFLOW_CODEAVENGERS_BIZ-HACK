@@ -1,0 +1,2 @@
+# Vercel installs Python dependencies from the repo root; the real list lives in backend/.
+-r backend/requirements.txt

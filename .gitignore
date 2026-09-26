@@ -17,3 +17,6 @@ frontend/dist/
 # Logs and editor noise
 *.log
 .DS_Store
+
+# Vercel CLI
+.vercel/

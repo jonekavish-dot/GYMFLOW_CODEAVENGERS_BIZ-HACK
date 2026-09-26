@@ -12,9 +12,13 @@ from .db import Base, engine
 from .routers import attendance, auth, checkins, classes, members, plans, settings as settings_router, slots, trainers
 
 
+# At import, not in the lifespan hook: serverless hosts never run lifespan, and a weak secret
+# must stop the app from serving at all rather than be checked only where a hook happens to run.
+settings.assert_production_safe()
+
+
 @asynccontextmanager
 async def lifespan(_: FastAPI):
-    settings.assert_production_safe()
     Base.metadata.create_all(engine)
     yield
 

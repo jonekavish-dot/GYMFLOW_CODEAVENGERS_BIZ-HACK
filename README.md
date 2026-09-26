@@ -146,6 +146,7 @@ Copy `backend/.env.example` to `backend/.env`. Everything has a development defa
 | `ACCESS_TOKEN_MINUTES` / `REFRESH_TOKEN_DAYS` | Token lifetimes | `15` / `7` |
 | `APP_TIMEZONE` | The gym's local day drives attendance and expiry | `Asia/Kolkata` |
 | `COOKIE_SECURE` | `true` behind HTTPS so the refresh cookie never travels over HTTP | `false` |
+| `DB_POOL_SIZE` / `DB_MAX_OVERFLOW` | Connection pool per process | `5` / `5` |
 | `CORS_ORIGINS` | Comma-separated; only if the SPA is served from another origin | *(empty)* |
 
 Generate a secret with `python -c "import secrets; print(secrets.token_urlsafe(48))"`.
@@ -160,18 +161,31 @@ DATABASE_URL=postgresql://user:password@ep-your-project.neon.tech/neondb?sslmode
 
 The `postgresql://` form is fine; the driver is filled in automatically. Tables are created on startup, and the pool checks each connection before use because Neon suspends idle compute.
 
-## Deploying
+## Deploying (free: Vercel + Neon)
 
-Run it as a single service so the browser talks to one origin (which keeps the refresh cookie simple):
+The repo is set up for [Vercel](https://vercel.com) (Hobby plan) with a [Neon](https://neon.tech) Postgres database. Vercel serves the React build as static files and runs the FastAPI app as a serverless function (`api/index.py`, routed by `vercel.json`).
 
-```bash
-cd frontend && npm ci && npm run build
-cd ../backend && pip install -r requirements.txt
-APP_ENV=production JWT_SECRET=... DATABASE_URL=... COOKIE_SECURE=true \
-  uvicorn app.main:app --host 0.0.0.0 --port $PORT
-```
+1. **Neon:** create a project (Singapore is closest to India), copy the **direct** connection string (turn *Connection pooling* off), then create the tables once from your machine:
+   ```bash
+   cd backend
+   DATABASE_URL="postgresql://...neon.tech/neondb?sslmode=require" python -m app.init_db
+   ```
+2. **Vercel:** *Add New > Project*, import this GitHub repo, set **Framework Preset: Other** (leave everything else; `vercel.json` provides the build), and add these environment variables:
 
-Any host that runs a Python web process works (Render, Railway, Fly.io, a VM). Note that tables are created automatically but there is no migration tool yet; add Alembic before changing the schema on a database that holds real data.
+   | Name | Value |
+   |---|---|
+   | `DATABASE_URL` | the Neon string |
+   | `JWT_SECRET` | a random 32+ character string (`python -c "import secrets; print(secrets.token_urlsafe(48))"`) |
+   | `APP_ENV` | `production` |
+   | `COOKIE_SECURE` | `true` |
+   | `APP_TIMEZONE` | `Asia/Kolkata` |
+   | `DB_POOL_SIZE` / `DB_MAX_OVERFLOW` | `2` / `2` (serverless runs many small instances) |
+
+3. **Deploy.** Every push to `main` redeploys. On first visit, the login page shows the one-time admin setup form.
+
+Notes: Vercel doesn't run startup hooks, so run `python -m app.init_db` after adding a table (there is no migration tool yet; add Alembic before altering columns on real data). The login and check-in-code rate limiters are per instance, so on serverless they slow guessing rather than fully stopping it. Vercel's Hobby plan is for non-commercial use.
+
+Any host that runs a Python web process also works: `cd frontend && npm ci && npm run build`, then `cd backend && uvicorn app.main:app` serves the API and the built app together on one port.
 
 ## Tests
 

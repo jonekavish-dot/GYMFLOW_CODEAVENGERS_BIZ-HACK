@@ -77,9 +77,12 @@ def bootstrap(body: BootstrapIn, response: Response, db: DB):
 
 
 @router.post("/login", response_model=TokenOut)
-def login(body: LoginIn, request: Request, response: Response, db: DB):
+def login(body: LoginIn, response: Response, db: DB):
     global _dummy_hash
-    key = f"{request.client.host if request.client else '?'}|{body.email}"
+    # Keyed by email alone: behind a proxy the client IP isn't reliable (and a spoofable
+    # X-Forwarded-For would let an attacker mint fresh keys to dodge the limit). The trade-off is
+    # that someone hammering an address can lock it out for the window; guessing is what's stopped.
+    key = body.email
     login_limiter.check(key)
 
     user = db.scalar(select(User).where(User.email == body.email))

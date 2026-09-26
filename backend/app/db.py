@@ -56,7 +56,9 @@ def make_engine(url: str):
 
         return eng
     # Neon suspends idle compute, so a pooled connection can be dead: ping before use.
-    return create_engine(url, pool_pre_ping=True, pool_size=5, max_overflow=5, pool_recycle=300)
+    return create_engine(
+        url, pool_pre_ping=True, pool_size=settings.db_pool_size, max_overflow=settings.db_max_overflow, pool_recycle=300
+    )
 
 
 engine = make_engine(settings.database_url)
