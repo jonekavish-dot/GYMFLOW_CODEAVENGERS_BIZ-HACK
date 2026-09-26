@@ -1,8 +1,19 @@
+# Python / backend
+backend/.venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+*.db
+
+# Node / frontend
 node_modules/
-.firebase/
-firebase-debug.log*
-firestore-debug.log*
-ui-debug.log*
-*.log
+frontend/dist/
+
+# Secrets and local config
 .env
+.env.*
+!.env.example
+
+# Logs and editor noise
+*.log
 .DS_Store

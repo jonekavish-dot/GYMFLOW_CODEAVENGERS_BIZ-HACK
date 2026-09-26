@@ -2,31 +2,41 @@
 
 **Gym membership, class & slot booking, attendance and front-desk check-in — built for PS76, BIZ HACK '26.**
 
-A dual-portal system on Firebase: an **Admin Console** for running the gym day to day, and a **Member Portal** for booking, checking in and tracking progress. No backend server — Firebase Auth + Firestore + Hosting, secured entirely by Firestore security rules, deployed as an installable web app.
+A dual-portal web app: an **Admin Console** for running the gym day to day and a **Member Portal** for booking, checking in and tracking progress. **FastAPI** (Python) serves a JSON API secured with **JWT access + rotating refresh tokens** and role-based access control; a **React** single-page app (built with Node/Vite) is the interface; **PostgreSQL** stores the data. It installs as an app from Chrome.
 
-**Live:** https://ps76-gym.web.app
+| Layer | Technology |
+|---|---|
+| API | FastAPI · SQLAlchemy 2 · Pydantic v2 · PyJWT · bcrypt |
+| Database | PostgreSQL (Neon or any Postgres); SQLite for local development |
+| Frontend | React 19 · React Router · TanStack Query · Chart.js |
+| Tooling | Node 22 + Vite (build/dev server), pytest |
 
 ---
 
 ## Features
 
 **Admin Console**
-- Membership plans, member registration and renewals
-- Class scheduling and gym workout **slots** with trainer-conflict detection — no two slots for the same trainer can overlap
-- Daily **attendance** roll call with exercise categories (A–F) plus custom exercises
-- **Front-desk check-in desk**: generate a QR + 6-digit code with admin-set validity (minutes or hours); see who's inside live, and check people out
-- Trainers, payments & revenue ledger, analytics dashboards, gym settings
+- Membership plans, member registration and renewals (expired memberships restart today, active ones stack)
+- Class scheduling and gym workout **slots** with capacity limits and **trainer-conflict detection** — a trainer can't run two overlapping slots
+- Daily **attendance** roll call with exercise categories A–F plus custom exercises
+- **Front-desk check-in desk**: generate a QR + 6-digit code with admin-chosen validity (minutes or hours), see who's inside live, check people out
+- Trainers, payments & revenue ledger with printable receipts, analytics dashboards, CSV / Excel / PDF exports, gym settings
 
 **Member Portal**
-- Membership status, goals, and AI class recommendations (Gemini via Firebase AI Logic)
-- Book classes and gym slots with live seat counts
-- **Self-check-in** by scanning the front-desk QR or typing the code — flows straight into picking today's exercises, which shows up live on the admin's Attendance tab
-- Personal attendance history, streaks, and payment receipts
+- Membership status and expiry alerts, goals, class booking with live seat counts, gym slot booking
+- **Self-check-in** by scanning the front-desk QR or typing the code — flows straight into choosing today's exercises, which appear live on the admin's Attendance tab
+- Personal attendance history, streaks, payment receipts
+
+**Security**
+- Short-lived **access tokens** (15 min, held in memory only) + **rotating refresh tokens** in an httpOnly, SameSite cookie; replaying a used refresh token revokes the whole session family
+- **RBAC** on every route (`admin` / `member`), checked against the database so demoting or disabling a user is immediate
+- bcrypt password hashing, login and check-in-code **rate limiting**, uniform "wrong email or password" responses, password change signs out every other device
+- Business rules are enforced **server-side**: capacity is taken with one atomic conditional `UPDATE`, memberships must be active to book or check in, check-in codes expire on their own, and a member can only mark *themselves* present — for today, with at least one exercise, and only after checking in
 
 **Platform**
-- Installable as an app via Chrome's install prompt (manifest + service worker)
-- Fully responsive — data tables become cards on phones, a raised scanner button anchors the mobile nav
-- Every write is enforced by Firestore rules, not just the UI: capacity limits, one-booking-per-member, active-membership checks, and code expiry are all checked server-side
+- Installable via Chrome's install prompt (manifest + service worker that never caches API data)
+- Fully responsive — tables become cards on phones, and a raised scanner button anchors the mobile nav
+- Interactive API docs at `/api/docs`
 
 ---
 
@@ -79,80 +89,131 @@ The scanner button rides above the bottom nav, raised and centered — tap it to
 
 | Mobile nav | Check In |
 |---|---|
-| ![Mobile nav with scanner FAB](docs/screenshots/17-mobile-nav-fab.png) | ![Check in](docs/screenshots/18-mobile-checkin.png) |
+| ![Mobile nav with scanner button](docs/screenshots/17-mobile-nav-fab.png) | ![Check in](docs/screenshots/18-mobile-checkin.png) |
 
 ### Sign out
 
-Logging out returns to the same shared sign-in page.
+Logging out returns to the shared sign-in page.
 
 ![Logged out](docs/screenshots/19-logout.png)
 
+### API
+
+FastAPI documents itself; try every endpoint at `/api/docs`.
+
+![API docs](docs/screenshots/20-api-docs.png)
+
 ---
 
-## Structure
+## Run it locally
+
+You need **Python 3.11+** and **Node 20+**.
+
+```bash
+# 1. Backend
+cd backend
+python -m venv .venv
+.venv/Scripts/activate            # Windows   (macOS/Linux: source .venv/bin/activate)
+pip install -r requirements-dev.txt
+python -m app.seed_demo --reset   # optional demo data (creates a local SQLite file)
+uvicorn app.main:app --reload     # http://127.0.0.1:8000  ·  API docs at /api/docs
+
+# 2. Frontend (a second terminal), hot-reloading, proxying /api to the backend
+cd frontend
+npm install
+npm run dev                       # http://localhost:5173
+```
+
+Demo logins after seeding: `admin@gymflow.test` / `admin123` and `member@gymflow.test` / `member123`.
+On an empty database the login page shows a one-time **first-admin setup** form instead.
+
+To run everything as one process, build the SPA and let FastAPI serve it:
+
+```bash
+cd frontend && npm run build      # writes frontend/dist
+cd ../backend && uvicorn app.main:app     # http://127.0.0.1:8000 serves the app and the API
+```
+
+## Configuration
+
+Copy `backend/.env.example` to `backend/.env`. Everything has a development default except `JWT_SECRET` in production.
+
+| Variable | Purpose | Default |
+|---|---|---|
+| `DATABASE_URL` | Any SQLAlchemy URL. A Neon/Postgres URL works as-is | `sqlite:///./gymflow.db` |
+| `JWT_SECRET` | Signs tokens. **Required in production**, 32+ random characters | dev-only value |
+| `APP_ENV` | `production` refuses to start with a weak `JWT_SECRET` | `development` |
+| `ACCESS_TOKEN_MINUTES` / `REFRESH_TOKEN_DAYS` | Token lifetimes | `15` / `7` |
+| `APP_TIMEZONE` | The gym's local day drives attendance and expiry | `Asia/Kolkata` |
+| `COOKIE_SECURE` | `true` behind HTTPS so the refresh cookie never travels over HTTP | `false` |
+| `CORS_ORIGINS` | Comma-separated; only if the SPA is served from another origin | *(empty)* |
+
+Generate a secret with `python -c "import secrets; print(secrets.token_urlsafe(48))"`.
+
+### Using Neon
+
+Create a project at [neon.tech](https://neon.tech), copy its connection string, and set:
+
+```
+DATABASE_URL=postgresql://user:password@ep-your-project.neon.tech/neondb?sslmode=require
+```
+
+The `postgresql://` form is fine; the driver is filled in automatically. Tables are created on startup, and the pool checks each connection before use because Neon suspends idle compute.
+
+## Deploying
+
+Run it as a single service so the browser talks to one origin (which keeps the refresh cookie simple):
+
+```bash
+cd frontend && npm ci && npm run build
+cd ../backend && pip install -r requirements.txt
+APP_ENV=production JWT_SECRET=... DATABASE_URL=... COOKIE_SECURE=true \
+  uvicorn app.main:app --host 0.0.0.0 --port $PORT
+```
+
+Any host that runs a Python web process works (Render, Railway, Fly.io, a VM). Note that tables are created automatically but there is no migration tool yet; add Alembic before changing the schema on a database that holds real data.
+
+## Tests
+
+```bash
+cd backend
+python -m pytest -q                                                    # SQLite, in memory
+TEST_DATABASE_URL=postgresql://user:pass@localhost/gymflow_test python -m pytest -q   # real Postgres
+```
+
+45 tests cover the JWT/refresh lifecycle (rotation, replay revocation, logout, password change), RBAC on every role boundary, class and slot capacity and overlap rules, membership expiry and renewal maths, check-in code validity and rate limiting, and the self-attendance rules. CI runs the suite on SQLite **and** PostgreSQL, then builds the frontend.
+
+## Project layout
 
 ```
 .
-├── firebase.json · .firebaserc      hosting + rules + emulator config (project: ps76-gym)
-├── firestore.rules                  roles, capacity-safe booking, check-in codes, expiry
-├── firestore.indexes.json
-├── package.json                     npm test · npm run deploy · npm run serve
-├── tests/rules.test.js              Firestore rules tests (emulator) — 50+ tests
-├── tools/deploy.cjs                 deploy via Firebase REST APIs (works with an Admin SDK key)
-└── public/                          ← what gets hosted
-    ├── index.html · admin.html · member.html   thin shells; each loads one entry script
-    ├── manifest.webmanifest · sw.js             PWA install + offline shell caching
-    ├── assets/css/                              tokens, components, layout, mobile, auth
-    └── js/
-        ├── config/            app identity + Firebase web config
-        ├── core/               app/auth/db init, secondary auth, PWA install, connection probe
-        ├── shared/              shell (sidebar/nav/FAB), table, modal, charts, export, receipt,
-        │                        QR encode/scan, idle auto-logout, toast, forms
-        ├── modules/            one folder per feature — *.service.js (Firestore) + *.view.js (UI)
-        │   ├── dashboard/ · members/ · plans/ · classes/ · slots/ · trainers/
-        │   ├── attendance/ · checkin/ · payments/ · analytics/ · settings/
-        │   ├── membership/ · bookings/ · activity/ · ai/
-        └── entries/            page entry points: login.js · admin.js · member.js
+├── backend/
+│   ├── app/
+│   │   ├── main.py          FastAPI app, security headers, serves the built SPA
+│   │   ├── config.py        settings from the environment
+│   │   ├── db.py · models.py   engine, timestamptz handling, SQLAlchemy models
+│   │   ├── security.py      bcrypt + JWT creation/verification
+│   │   ├── deps.py          auth + RBAC dependencies
+│   │   ├── ratelimit.py     failed-attempt limiter (login, check-in codes)
+│   │   ├── schemas.py       request/response models
+│   │   ├── routers/         auth · members · plans(+payments) · classes · slots · trainers
+│   │   │                    attendance · checkins · settings
+│   │   └── seed_demo.py     demo data
+│   └── tests/
+└── frontend/
+    ├── public/              manifest, service worker, icons
+    └── src/
+        ├── api/             fetch client (silent token refresh) + query hooks
+        ├── auth/            auth context, session restore
+        ├── components/      shell, tables, modals, charts, QR
+        ├── lib/             formatting, exports, receipts, QR scanning
+        └── pages/           admin/* and member/*
 ```
 
 ## Data model
 
-| Collection | Doc id | Notes |
-|---|---|---|
-| `users` | uid | `role: admin \| member` — only admins write it |
-| `members` | uid | plan, expiry, exercise category, payments-to-date |
-| `plans` | auto | `durationDays`, `price`, `active` |
-| `classes` / `bookings` | auto / `{classId}_{uid}` | capacity-safe booking via transaction + rules |
-| `slots` / `slot_bookings` | auto / `{slotId}_{uid}` | gym workout slots; trainer-overlap checked before create |
-| `attendance` | `{date}_{uid}` | one doc per person-day; members can self-mark present with ≥1 exercise |
-| `checkins` | auto | `config/checkinSession` holds the one active admin-issued code + expiry |
-| `payments` | auto | append-only revenue ledger (joins + renewals) |
-| `trainers` | auto | staff roster |
-| `config` | `bootstrap` `gym` `exercises` `checkinSession` | setup marker, gym profile, exercises, check-in code |
+`users` (role) · `refresh_tokens` (rotation families) · `members` · `plans` · `payments` (append-only ledger) · `classes` + `class_bookings` · `slots` + `slot_bookings` · `trainers` · `attendance` (one row per person per day) · `checkins` · `checkin_session` (the one active code) · `settings`.
 
-## Auth & roles
+## History
 
-- Role lives in `users/{uid}.role` (`admin` \| `member`); only admins can write it.
-- **First admin:** on a fresh project, the login page shows a one-time setup form — the rules allow exactly one bootstrap.
-- Members are registered by an admin, who creates their login via a secondary Auth instance so the admin's own session stays intact.
-- Every page calls `requireRole()`: signed-out → login; wrong role → their own portal.
-- 3-minute inactivity auto-logout on both portals.
-
-## Run, test, deploy
-
-```bash
-npm install
-npm test                                  # rules tests (needs Java for the emulator)
-npm run serve                             # local emulators; set USE_EMULATORS = true in firebase.config.js
-GOOGLE_APPLICATION_CREDENTIALS=key.json npm run deploy   # rules + indexes + hosting → https://ps76-gym.web.app
-```
-
-**CI:** `.github/workflows/ci.yml` runs the rules tests on every push/PR, and deploys on pushes to `main` when the repo secret `FIREBASE_SERVICE_ACCOUNT_PS76_GYM` is set.
-
-## Security model
-
-Every meaningful write is enforced by `firestore.rules`, not just hidden in the UI:
-- A member can only book a class/slot if their membership is active, and only into one seat — capacity is checked and incremented atomically together with the booking record.
-- A member can only self-check-in with the exact code currently in `config/checkinSession`, and only before it expires — checked server-side against `request.time`.
-- A member can only mark **themselves** present, and only with at least one exercise chosen; marking absent, backdating, or editing someone else's row stays admin-only.
-- Trainer double-booking across overlapping time windows is rejected before a slot is even created.
+The first version of GymFlow ran on Firebase (Auth + Firestore + Hosting). It is preserved at the [`firebase-final`](../../tree/firebase-final) tag.
