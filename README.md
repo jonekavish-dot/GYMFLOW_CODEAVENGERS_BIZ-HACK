@@ -11,6 +11,8 @@ A dual-portal web app: an **Admin Console** for running the gym day to day and a
 | Frontend | React 19 · React Router · TanStack Query · Chart.js |
 | Tooling | Node 22 + Vite (build/dev server), pytest |
 
+> **Evaluating this project?** Start with [docs/EVALUATION.md](docs/EVALUATION.md): run steps, demo logins and where each requirement lives.
+
 ---
 
 ## Features
@@ -213,7 +215,13 @@ TEST_DATABASE_URL=postgresql://user:pass@localhost/gymflow_test python -m pytest
 │   │   ├── routers/         auth · members · plans(+payments) · classes · slots · trainers
 │   │   │                    attendance · checkins · settings
 │   │   └── seed_demo.py     demo data
-│   └── tests/
+│   ├── tests/
+│   ├── .env.example · .env.production.example   config templates (real .env files are git-ignored)
+│   └── README.md
+├── api/index.py             Vercel serverless entry (wraps backend/app)
+├── docs/                    EVALUATION.md + screenshots
+├── requirements.txt         backend dependencies (repo root, where Vercel reads them)
+├── vercel.json              Vercel build + routing
 └── frontend/
     ├── public/              manifest, service worker, icons
     └── src/
