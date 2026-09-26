@@ -1,2 +1,12 @@
-# Vercel installs Python dependencies from the repo root; the real list lives in backend/.
--r backend/requirements.txt
+# Runtime dependencies. This file is at the repo root because Vercel reads it from here (and
+# can't follow "-r" includes); backend/requirements.txt points back at it.
+fastapi>=0.115
+uvicorn[standard]>=0.30
+sqlalchemy>=2.0.30
+psycopg[binary]>=3.2
+pydantic>=2.8
+pydantic-settings>=2.4
+PyJWT>=2.9
+bcrypt>=4.2
+tzdata>=2024.1
+python-multipart>=0.0.9

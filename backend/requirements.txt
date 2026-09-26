@@ -1,10 +1,2 @@
-fastapi>=0.115
-uvicorn[standard]>=0.30
-sqlalchemy>=2.0.30
-psycopg[binary]>=3.2
-pydantic>=2.8
-pydantic-settings>=2.4
-PyJWT>=2.9
-bcrypt>=4.2
-tzdata>=2024.1
-python-multipart>=0.0.9
+# Runtime dependencies live in ../requirements.txt (the repo root) so Vercel can read them.
+-r ../requirements.txt
